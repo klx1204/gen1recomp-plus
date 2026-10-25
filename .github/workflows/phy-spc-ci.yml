@@ -1,0 +1,28 @@
+name: phy-spc-ci
+on:
+  push:
+    branches: [ps-split]
+  pull_request:
+    branches: [ps-split]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install LuaJIT
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y luajit
+      - name: Contract tests
+        run: luajit tests/phy_spc_test.lua
+      - name: Upstream seam guard
+        run: luajit tests/phy_spc_guard.lua
+      - name: Syntax check
+        run: |
+          luajit -e "assert(loadfile('src/core/game3/battle/phy_spc.lua'))"
+          luajit -e "assert(loadfile('src/core/game3/battle/phy_spc_menu.lua'))"

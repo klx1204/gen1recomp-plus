@@ -61,6 +61,7 @@ New files:
 - `tests/phy_spc_test.lua`
 - `tests/phy_spc_guard.lua`
 - `.github/workflows/upstream-sync.yml`
+- `.github/workflows/phy-spc-ci.yml`
 - `docs/phy-spc.md`
 - `FORK.md`
 - the fork note at the top of `README.md`
