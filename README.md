@@ -1,3 +1,7 @@
+> **Fork note:** This checkout is `gen1recomp-ps-split`, a minimal fork for
+> per-move physical/special support. Read `FORK.md` and `AGENTS.md` before
+> changing engine code.
+
 # G1R Deluxe aka Gen1Recomp
 
 A native LÖVE2D recreation of Poke Red, Blue, Yellow, Gold, Silver, Crystal, FireRed, LeafGreen, Ruby, Sapphire, and Emerald.

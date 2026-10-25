@@ -8,8 +8,30 @@ adds one capability:
 - **per-move physical/special categories** for the Gen 3 engine;
 - a battle move menu line showing `PHY` / `SPE` / `STA` and type effectiveness.
 
-Everything else belongs in the companion mod repo:
+Read `FORK.md` first. Everything else belongs in the companion mod repo:
 https://github.com/klx1204/types-mod-gen1recomp
+
+## Current state
+
+Implemented and tested:
+
+- `src/core/game3/battle/phy_spc.lua`
+- `src/core/game3/battle/phy_spc_menu.lua` (labels only; drawing is pending)
+- `tests/phy_spc_test.lua`
+- `tests/phy_spc_guard.lua`
+- `.github/workflows/upstream-sync.yml`
+
+Not wired yet:
+
+- the eight `Types.isPhysical` call sites in `damage.lua`, `engine.lua`,
+  `effects/hit.lua`, and the category line in `moves.lua`;
+- the three battle move menu draw functions in `ui.lua`;
+- `Types.MOVE_CATEGORY` is **not set** until the call sites are wired, so the
+  companion mod still uses its compat path.
+
+First task when continuing: wire the call sites (see `docs/phy-spc.md`), set
+`Types.MOVE_CATEGORY = true`, then update `phy_spc_guard.lua` to assert the
+wiring instead of the old calls.
 
 ## Hard rules
 
@@ -39,8 +61,14 @@ New files:
 - `tests/phy_spc_test.lua`
 - `tests/phy_spc_guard.lua`
 - `.github/workflows/upstream-sync.yml`
-- `.github/workflows/phy-spc-release.yml`
 - `docs/phy-spc.md`
+- `FORK.md`
+- the fork note at the top of `README.md`
+
+Planned, not present yet:
+
+- `.github/workflows/phy-spc-release.yml`
+- `patches/`
 
 Call-site wiring only (one line each unless noted):
 
@@ -56,17 +84,19 @@ If a change does not fit this list, stop and discuss it first.
 ## Public interface for the mod
 
 ```lua
--- src/core/game3/battle/types.lua
-Types.MOVE_CATEGORY = true
-
 -- src/core/game3/battle/phy_spc.lua
 PhySpc.physical(move)        -- true / false
 PhySpc.label(move)           -- "PHY" / "SPE" / "STA"
 PhySpc.effectiveness(move, target)
+-- returns multiplier 0/0.25/0.5/1/2/4 + flags
+
+-- src/core/game3/battle/types.lua
+-- set only after the call sites are wired:
+Types.MOVE_CATEGORY = true
 ```
 
 `Types.isPhysical(typeId)` stays for vanilla callers. New code uses
-`PhySpc.physical(move)`.
+`PhySpc.physical(move)`. See `docs/phy-spc.md` for the exact precedence rules.
 
 ## Upstream sync
 
@@ -96,9 +126,13 @@ Rules:
 ## Tests
 
 ```bash
-luajit tests/run_tests.lua
 luajit tests/phy_spc_test.lua
+luajit tests/phy_spc_guard.lua
 ```
+
+`tests/run_tests.lua` is the engine suite. It needs a generated cache
+(`tools/reimport.sh` or a ROM import) and is **not** the default fork test.
+Run it only when a cache is available.
 
 `tests/phy_spc_guard.lua` must fail with a clear message if upstream removes
 or renames:
@@ -112,16 +146,18 @@ or renames:
 
 | Engine | Per-move category | Menu label/effectiveness |
 | --- | --- | --- |
-| This fork | yes | yes |
+| This fork (wired) | yes | yes |
+| This fork (current) | core only; call sites not wired | labels only; drawing pending |
 | Official gen1recomp | no | no |
 
 The mod detects `Types.MOVE_CATEGORY` and degrades cleanly on the official
-engine.
+engine. Do not set it before the call sites are wired.
 
 ## Release checklist
 
-- [ ] `luajit tests/run_tests.lua` passes.
 - [ ] `luajit tests/phy_spc_test.lua` passes.
+- [ ] `luajit tests/phy_spc_guard.lua` passes.
+- [ ] `luajit tests/run_tests.lua` passes (when a generated cache is available).
 - [ ] No local absolute paths.
 - [ ] `git diff upstream/dev..ps-split --stat` is still small.
 - [ ] The mod repo's compatibility matrix matches this release.
