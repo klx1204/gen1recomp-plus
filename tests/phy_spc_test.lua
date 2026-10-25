@@ -53,4 +53,13 @@ assert(Menu.effectivenessLabel(2) == "x2")
 assert(Menu.effectivenessLabel(4) == "x4")
 assert(Menu.effectivenessLabel(nil) == "x1")
 
+local calls = {}
+Menu.draw(function(text, x, y, color)
+  calls[#calls + 1] = { text = text, x = x, y = y, color = color }
+end, { category = "physical", power = 90, type = 18 }, { type1 = 16 }, 10, 20)
+assert(#calls == 2, "draw must emit category and effectiveness")
+assert(calls[1].text == "PHY" and calls[1].x == 10 and calls[1].y == 20)
+assert(calls[2].text == "x2" and calls[2].x == 34 and calls[2].y == 20)
+assert(calls[2].color == Menu.COLORS.super)
+
 print("phy_spc_test: ok")

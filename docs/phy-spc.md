@@ -65,7 +65,8 @@ The guard test checks that these seams still exist before wiring.
 
 ## Menu display
 
-`phy_spc_menu.lua` provides pure labels:
+`phy_spc_menu.lua` owns the values and relative layout; the battle UI owns the
+font and canvas.
 
 ```lua
 local Menu = require("src.core.game3.battle.phy_spc_menu")
@@ -74,10 +75,20 @@ local category, effectiveness, mult = Menu.info(move, target)
 -- effectiveness: "x0" / "x1/4" / "x1/2" / "x1" / "x2" / "x4"
 ```
 
-Drawing is a later pass. Use the existing move-menu text origin and draw:
+`Menu.draw(draw, move, target, x, y, opts)` calls `draw(text, x, y, color)`:
 
-- category next to the move name or in the existing type row;
-- effectiveness with a colour ramp (grey x0, red x1/4/x1/2, white x1, green x2/x4).
+- category at `(x, y)`;
+- effectiveness at `(x + opts.gap, y)`, default gap `24`;
+- colours are 0..1 RGB:
+  - `x0`: grey `{0.60, 0.60, 0.60}` (immune)
+  - `x1/4`, `x1/2`: red `{0.85, 0.35, 0.35}` (resist)
+  - `x1`: white `{1.00, 1.00, 1.00}` (neutral)
+  - `x2`, `x4`: green `{0.35, 0.85, 0.45}` (super)
+
+Wire the three menu functions (`draw_move_menu_rs`, `draw_move_menu_rse`,
+FRLG `draw_move_menu`) by passing their text draw function. Keep the existing
+type/PP row; add the category/effectiveness on the same line if it fits, or
+immediately below it.
 
 Do not add ability immunities (Levitate, Flash Fire, Water Absorb, Volt Absorb,
 Wonder Guard, Soundproof) in the first pass. Type-only effectiveness is the

@@ -16,7 +16,7 @@ https://github.com/klx1204/types-mod-gen1recomp
 Implemented and tested:
 
 - `src/core/game3/battle/phy_spc.lua`
-- `src/core/game3/battle/phy_spc_menu.lua` (labels only; drawing is pending)
+- `src/core/game3/battle/phy_spc_menu.lua` (labels + relative layout; engine menu wiring is pending)
 - `tests/phy_spc_test.lua`
 - `tests/phy_spc_guard.lua`
 - `.github/workflows/upstream-sync.yml`
@@ -25,7 +25,8 @@ Not wired yet:
 
 - the eight `Types.isPhysical` call sites in `damage.lua`, `engine.lua`,
   `effects/hit.lua`, and the category line in `moves.lua`;
-- the three battle move menu draw functions in `ui.lua`;
+- the three battle move menu draw functions in `ui.lua` (their text draw
+  callback needs to call `phy_spc_menu.draw`);
 - `Types.MOVE_CATEGORY` is **not set** until the call sites are wired, so the
   companion mod still uses its compat path.
 
