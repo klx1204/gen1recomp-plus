@@ -282,7 +282,24 @@ local function drawPagination(m, page, minPage, maxPage)
 end
 
 local function drawTypeIcon(m, typeId, x, y)
-  drawFrame(m.moveTypes, typeId, x, y)
+  typeId = tonumber(typeId)
+  if typeId and typeId >= 0 and typeId <= 17 then
+    drawFrame(m.moveTypes, typeId, x, y)
+    return
+  end
+  -- Custom type (Fairy = 18): frame 18 of the ROM sheet is the first contest
+  -- category, so never draw it.  Prefer the mod's badge, then the name.
+  local Types = require("src.core.game3.battle.types")
+  local icon = typeId and Types.CUSTOM_ICONS[typeId]
+  local img = icon and Kit.image(icon)
+  if img then
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(img, x, y)
+    return
+  end
+  local w = win(m, W.TYPE)
+  local ctx = w and { pal = bankPal(m, w.paletteNum), colors = textColors(m, 1) } or {}
+  PalText.draw(Types.name(typeId or 0), x, y + 2, ctx)
 end
 
 local function drawPortrait(m, Sm, mon, egg, detail, page)

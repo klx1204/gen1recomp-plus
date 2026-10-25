@@ -604,7 +604,15 @@ end
 function PokedexChrome.drawTypeBadge(typeId, x, y)
   if not (love and love.graphics and typeId) then return end
   typeId = tonumber(typeId)
-  local rect = assert(TYPE_RECTS[typeId], "type id")
+  local rect = TYPE_RECTS[typeId]
+  if not rect then
+    -- Custom type (Fairy = 18); the atlas has no slice and the next one is a
+    -- contest category, so label it instead.
+    local Types = require("src.core.game3.battle.types")
+    local Font = require("src.ui.game3.frlg_font")
+    Font.draw(Types.name(typeId), x, y + 2, { small = true, colors = Font.COLOR.NORMAL })
+    return
+  end
   local img = assert(PokedexChrome.menuInfoImage(), "menu_info")
   local q = get_pokedex_quad("type_" .. typeId, rect.x, rect.y, rect.w, rect.h, 128, 128)
   love.graphics.setColor(1, 1, 1, 1)

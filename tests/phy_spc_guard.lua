@@ -16,6 +16,10 @@ end
 
 contains("src/core/game3/battle/types.lua", "function Types.isPhysical")
 contains("src/core/game3/battle/types.lua", "Types.MOVE_CATEGORY = true")
+contains("src/core/game3/battle/types.lua", "Types.CUSTOM_NAMES = {}")
+contains("src/core/game3/battle/types.lua", "Types.CUSTOM_ICONS = {}")
+contains("src/ui/game3/rse/summary_menu.lua", "Types.CUSTOM_ICONS")
+contains("src/ui/game3/rs/summary_menu.lua", "Types.CUSTOM_ICONS")
 contains("src/core/game3/battle/damage.lua", "PhySpc.physical")
 contains("src/core/game3/battle/engine.lua", "PhySpc.physical")
 contains("src/core/game3/battle/effects/hit.lua", "PhySpc.physical")

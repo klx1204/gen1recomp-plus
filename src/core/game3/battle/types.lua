@@ -32,6 +32,10 @@ Types.NATIVE_PHYSICAL = Types.PHYSICAL
 -- after the mod switches back to VANILLA or while a link battle rebuilds the
 -- chart from scratch.
 Types.CUSTOM_NAMES = {}
+-- Optional 32x16 badge images for custom type ids, keyed by type id and set
+-- by a mod to a LÖVE-readable path.  Menus fall back to the type name when
+-- the entry is absent or the image cannot be loaded.
+Types.CUSTOM_ICONS = {}
 local NATIVE_TYPE_MIN, NATIVE_TYPE_MAX = 0, 17
 
 local overlayNames

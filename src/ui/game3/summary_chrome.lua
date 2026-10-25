@@ -408,7 +408,16 @@ function SummaryChrome.drawTypeBadge(typeId, x, y)
     typeId = TYPE_NAMES[typeId:upper()] or 0
   end
   typeId = tonumber(typeId) or 0
-  local rect = TYPE_RECTS[typeId] or TYPE_RECTS[0]
+  local rect = TYPE_RECTS[typeId]
+  if not rect then
+    -- Custom type (Fairy = 18).  The atlas has no slice for it, and the
+    -- slice after DARK is a contest category, so draw the name instead of
+    -- the wrong badge.
+    local Types = require("src.core.game3.battle.types")
+    local Font = require("src.ui.game3.frlg_font")
+    Font.draw(Types.name(typeId), x, y + 2, { small = true, colors = Font.COLOR.NORMAL })
+    return
+  end
   local img = SummaryChrome.menuInfoImage()
   if not img then
     love.graphics.setColor(0.4, 0.4, 0.4, 1)

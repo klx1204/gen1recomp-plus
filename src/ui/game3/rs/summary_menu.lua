@@ -359,8 +359,20 @@ local function textTile(index, x, y, bank)
   frame(strip, offset, x, y); frame(strip, offset + 1, x, y + 8)
 end
 local function typeIcon(index, x, y)
-  index = tonumber(index) or require("src.core.game3.battle.types").ID[index]
-  frame(S._man.sprites.moveTypes, assert(index, "native type id"), x, y)
+  local Types = require("src.core.game3.battle.types")
+  index = tonumber(index) or Types.ID[index]
+  if not index or index > 17 then
+    local icon = index and Types.CUSTOM_ICONS[index]
+    local img = icon and Kit.image(icon)
+    if img then
+      love.graphics.setColor(1, 1, 1, 1)
+      love.graphics.draw(img, x, y)
+      return
+    end
+    print(Types.name(index or 0), x, y + 2)
+    return
+  end
+  frame(S._man.sprites.moveTypes, index, x, y)
 end
 local function portrait()
   local m, p = mon(), S._man
