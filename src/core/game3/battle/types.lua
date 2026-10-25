@@ -253,4 +253,8 @@ function Types.aiEffectiveness(atkType, defType1, defType2)
   return Types.aiTypeCalcUnits(atkType, defType1, defType2, false)
 end
 
+-- This fork supports a per-move category. The companion mod uses this marker
+-- to enable its full mode; official gen1recomp does not set it.
+Types.MOVE_CATEGORY = true
+
 return Types

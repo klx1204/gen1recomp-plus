@@ -16,23 +16,19 @@ https://github.com/klx1204/types-mod-gen1recomp
 Implemented and tested:
 
 - `src/core/game3/battle/phy_spc.lua`
-- `src/core/game3/battle/phy_spc_menu.lua` (labels + relative layout; engine menu wiring is pending)
+- `src/core/game3/battle/phy_spc_menu.lua` (labels, layout and draw callback)
+- the eight damage/engine/hit call sites now use `PhySpc.physical(move)`
+- `moves.lua` preserves `row.category`
+- `types.lua` sets `Types.MOVE_CATEGORY = true`
+- the RS, RSE and FRLG move menus show the category and effectiveness
 - `tests/phy_spc_test.lua`
 - `tests/phy_spc_guard.lua`
 - `.github/workflows/upstream-sync.yml`
+- `.github/workflows/phy-spc-ci.yml`
 
-Not wired yet:
-
-- the eight `Types.isPhysical` call sites in `damage.lua`, `engine.lua`,
-  `effects/hit.lua`, and the category line in `moves.lua`;
-- the three battle move menu draw functions in `ui.lua` (their text draw
-  callback needs to call `phy_spc_menu.draw`);
-- `Types.MOVE_CATEGORY` is **not set** until the call sites are wired, so the
-  companion mod still uses its compat path.
-
-First task when continuing: wire the call sites (see `docs/phy-spc.md`), set
-`Types.MOVE_CATEGORY = true`, then update `phy_spc_guard.lua` to assert the
-wiring instead of the old calls.
+Next work: real in-game validation (ROM-imported cache), doubles target
+selection for the effectiveness display, and a release workflow. The fork is
+feature-complete for the intended Gen 3 single-battle path.
 
 ## Hard rules
 
@@ -93,7 +89,6 @@ PhySpc.effectiveness(move, target)
 -- returns multiplier 0/0.25/0.5/1/2/4 + flags
 
 -- src/core/game3/battle/types.lua
--- set only after the call sites are wired:
 Types.MOVE_CATEGORY = true
 ```
 
@@ -139,21 +134,20 @@ Run it only when a cache is available.
 `tests/phy_spc_guard.lua` must fail with a clear message if upstream removes
 or renames:
 
-- `Types.isPhysical`
-- `Moves.get`
-- the battle move menu entry points
-- the four call sites in `damage.lua`, `engine.lua` and `hit.lua`
+- `Types.isPhysical` or `Types.MOVE_CATEGORY`
+- the `PhySpc.physical` call sites in `damage.lua`, `engine.lua` and `hit.lua`
+- `row.category` in `moves.lua`
+- the battle move menu entry points and `PhySpcMenu`
 
 ## Compatibility
 
 | Engine | Per-move category | Menu label/effectiveness |
 | --- | --- | --- |
-| This fork (wired) | yes | yes |
-| This fork (current) | core only; call sites not wired | labels only; drawing pending |
+| This fork | yes | yes |
 | Official gen1recomp | no | no |
 
 The mod detects `Types.MOVE_CATEGORY` and degrades cleanly on the official
-engine. Do not set it before the call sites are wired.
+engine.
 
 ## Release checklist
 

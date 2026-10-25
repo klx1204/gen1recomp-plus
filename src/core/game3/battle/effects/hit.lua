@@ -2,6 +2,7 @@ local Damage = require("src.core.game3.battle.damage")
 local Moves = require("src.core.game3.battle.moves")
 local EffectIds = require("src.core.game3.battle.effect_ids")
 local Types = require("src.core.game3.battle.types")
+local PhySpc = require("src.core.game3.battle.phy_spc")
 local Rules = require("src.core.game3.battle.rules")
 local Secondary = require("src.core.game3.battle.effects.secondary")
 local HeldItems = require("src.core.game3.battle.held_items")
@@ -38,7 +39,7 @@ local function dealt_event(M, target, dealt, info, sub)
   local eff = tonumber(info.effectiveness)
   local mult = eff and math.floor(eff * 10 + 0.5) or 10
   local physical = info.physical
-  if physical == nil then physical = Types.isPhysical(M.moveType or M.move.type) end
+  if physical == nil then physical = PhySpc.physical(M.move or M.moveType) end
   ModRuntime.emit("battle.damage_dealt", {
     battle = M.st, user = M.user, target = target, move = view,
     moveId = view and view.id, moveNum = M.mnum, damage = dealt,
@@ -90,7 +91,7 @@ function Hit.dealDamage(M, dmg, info)
   target.expHurtById = user.id
   target.expLastHitById = user.id
   local physical = info.physical
-  if physical == nil then physical = Types.isPhysical(M.moveType or M.move.type) end
+  if physical == nil then physical = PhySpc.physical(M.move or M.moveType) end
   -- pokefirered/src/battle_script_commands.c:1824
   if physical then
     target.lastPhysicalDamageTaken = dealt

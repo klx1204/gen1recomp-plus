@@ -20,6 +20,7 @@ local Healthbox = require("src.core.game3.battle.healthbox")
 local Pokemon = require("src.core.game3.pokemon")
 local Window = require("src.ui.game3.window")
 local Types = require("src.core.game3.battle.types")
+local PhySpcMenu = require("src.core.game3.battle.phy_spc_menu")
 local BallOpen = require("src.core.game3.battle.ball_open")
 local Oak = require("src.core.game3.battle.oak_advice")
 local Strings = require("src.core.Strings")
@@ -1946,6 +1947,15 @@ local function draw_menu_text(text, x, y, opts)
   })
 end
 
+local function phyColor(rgb)
+  rgb = rgb or { 1, 1, 1 }
+  return {
+    fg = { rgb[1] or 1, rgb[2] or 1, rgb[3] or 1, 1 },
+    shadow = { 0, 0, 0, 1 },
+    bg = { 0, 0, 0, 0 },
+  }
+end
+
 local PP_STATE_TO_COLOR_INDEX = {
   [0] = 1,
   [1] = 2,
@@ -2592,6 +2602,11 @@ local function draw_move_menu_rs(st)
     F.draw(string.char(0xfc, 0x11, 2, 0xfc, 0x14, 6) .. string.format("%2d/%2d", pp, maxPp),
       200, 120, { colors = colors })
     F.draw(Types.name(Ui.moveTypeOf(mon, slot, def)), 184, 136, { colors = colors })
+    local target = st and st.enemy
+    local category, effectiveness, mult = PhySpcMenu.info(def, target)
+    F.draw(category .. " " .. effectiveness, 8, 152, {
+      small = true, colors = phyColor(PhySpcMenu.colorFor(mult)),
+    })
   end
 end
 
@@ -2628,7 +2643,14 @@ local function draw_move_menu_rse(st)
     rse_text(W.MOVE_TYPE, typeLabel)
     local F = battle_font()
     local tw = F.measure(typeLabel, { font = "narrow" })
-    rse_text(W.MOVE_TYPE, Types.name(Ui.moveTypeOf(mon, slot, def)), tw, { narrow = false })
+    local typeText = Types.name(Ui.moveTypeOf(mon, slot, def))
+    rse_text(W.MOVE_TYPE, typeText, tw, { narrow = false })
+    local target = st and st.enemy
+    local category, effectiveness, mult = PhySpcMenu.info(def, target)
+    local typeW = F.measure(typeText, { narrow = false })
+    rse_text(W.MOVE_TYPE, category .. " " .. effectiveness, tw + typeW + 4, {
+      narrow = true, colors = phyColor(PhySpcMenu.colorFor(mult)),
+    })
   end
 end
 
@@ -2701,8 +2723,14 @@ local function draw_move_menu(st)
     -- pokefirered/src/battle_controller_player.c:1402
     draw_menu_text(string.format("%2d/%2d", pp, maxPp), 202, 122, { small = false, colors = ppColors })
     -- pokefirered/src/battle_controller_player.c:1413
-    draw_menu_text(RomText.plain("gText_MoveInterfaceType") .. Types.name(Ui.moveTypeOf(mon, slot, def)), 168, 138,
-      { small = true, colors = FrlgFont.COLOR.NORMAL })
+    local typeText = RomText.plain("gText_MoveInterfaceType") .. Types.name(Ui.moveTypeOf(mon, slot, def))
+    draw_menu_text(typeText, 168, 138, { small = true, colors = FrlgFont.COLOR.NORMAL })
+    local target = st and st.enemy
+    local category, effectiveness, mult = PhySpcMenu.info(def, target)
+    local typeW = FrlgFont.measure(typeText, { small = true })
+    draw_menu_text(category .. " " .. effectiveness, 168 + typeW + 4, 138, {
+      small = true, colors = phyColor(PhySpcMenu.colorFor(mult)),
+    })
   end
 end
 

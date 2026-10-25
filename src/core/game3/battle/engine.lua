@@ -11,6 +11,7 @@ local badgeWarned = false
 local ResidualHandlers = require("src.core.game3.battle.residual_handlers")
 local Commands = require("src.core.game3.battle.commands")
 local Types = require("src.core.game3.battle.types")
+local PhySpc = require("src.core.game3.battle.phy_spc")
 local Rules = require("src.core.game3.battle.rules")
 local Secondary = require("src.core.game3.battle.effects.secondary")
 local HeldItems = require("src.core.game3.battle.held_items")
@@ -452,7 +453,7 @@ function Ctx:accuracyCheck(mode, printFail)
   local calc = math.floor(ratio[1] * moveAcc / ratio[2])
   if ad:abilityOf(user) == "COMPOUND_EYES" then calc = math.floor(calc * 130 / 100) end
   if weather == "SAND" and ad:abilityOf(target) == "SAND_VEIL" then calc = math.floor(calc * 80 / 100) end
-  if ad:abilityOf(user) == "HUSTLE" and Types.isPhysical(self.moveType or self.move.type) then
+  if ad:abilityOf(user) == "HUSTLE" and PhySpc.physical(self.move or { type = self.moveType }) then
     calc = math.floor(calc * 80 / 100)
   end
   local tHe, tParam = HeldItems.of(target, "accuracy", self.st)
@@ -1059,7 +1060,7 @@ local function ohko(M)
   local endured = target.expEnduring and true or false
   local hung = not endured and banded
   if endured or hung then dmg = math.max(0, hpBefore - 1) end
-  Hit.dealDamage(M, dmg, { physical = Types.isPhysical(M.move.type) })
+  Hit.dealDamage(M, dmg, { physical = PhySpc.physical(M.move) })
   if endured then
     M:sayId("STRINGID_PKMNENDUREDHIT", { def = target })
   elseif hung then

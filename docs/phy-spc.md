@@ -16,18 +16,15 @@ Implemented and tested:
 
 - `src/core/game3/battle/phy_spc.lua`
 - `src/core/game3/battle/phy_spc_menu.lua`
+- the eight damage/engine/hit call sites use `PhySpc.physical(move)`
+- `moves.lua` preserves `row.category`
+- `types.lua` sets `Types.MOVE_CATEGORY = true`
+- the RS, RSE and FRLG move menus show the category and effectiveness
 - `tests/phy_spc_test.lua`
 - `tests/phy_spc_guard.lua`
 
-Not wired yet:
-
-- the eight damage/engine/hit call sites still call `Types.isPhysical`;
-- the battle move menu does not draw the new labels yet;
-- `Types.MOVE_CATEGORY` is not set yet, so the mod stays in compat mode.
-
-First task when continuing: wire the call sites, then set
-`Types.MOVE_CATEGORY = true` in `src/core/game3/battle/types.lua`, then update
-`tests/phy_spc_guard.lua` to assert the wiring instead of the old calls.
+Next work: real in-game validation with an imported Gen 3 cache, doubles
+target selection for effectiveness, and a release workflow.
 
 ## Contract
 
@@ -51,7 +48,7 @@ PhySpc.effectiveness(move, target)
 
 `Types.isPhysical(typeId)` stays unchanged for vanilla callers.
 
-## Call sites to wire
+## Call sites (wired)
 
 | File | Function / area | Count |
 | --- | --- | --- |
@@ -85,10 +82,14 @@ local category, effectiveness, mult = Menu.info(move, target)
   - `x1`: white `{1.00, 1.00, 1.00}` (neutral)
   - `x2`, `x4`: green `{0.35, 0.85, 0.45}` (super)
 
-Wire the three menu functions (`draw_move_menu_rs`, `draw_move_menu_rse`,
-FRLG `draw_move_menu`) by passing their text draw function. Keep the existing
-type/PP row; add the category/effectiveness on the same line if it fits, or
-immediately below it.
+The three menu functions use `PhySpcMenu.info`:
+
+- RS: compact `PHY x2` at `(8, 152)` with the small font;
+- RSE: `PHY x2` appended after the type text in the `MOVE_TYPE` window;
+- FRLG: `PHY x2` appended after the type text at `(168, 138)`.
+
+The text colour follows `Menu.colorFor(mult)`. If a layout clips on a real
+device, move the compact token to the PP row rather than shrinking further.
 
 Do not add ability immunities (Levitate, Flash Fire, Water Absorb, Volt Absorb,
 Wonder Guard, Soundproof) in the first pass. Type-only effectiveness is the

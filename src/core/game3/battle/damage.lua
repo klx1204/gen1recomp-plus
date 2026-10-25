@@ -2,6 +2,7 @@
 
 local Rules = require("src.core.game3.battle.rules")
 local Types = require("src.core.game3.battle.types")
+local PhySpc = require("src.core.game3.battle.phy_spc")
 local Moves = require("src.core.game3.battle.moves")
 local EffectIds = require("src.core.game3.battle.effect_ids")
 local rngWarned = false
@@ -221,7 +222,7 @@ function Damage.base(attacker, defender, move, opts)
   local aHe, aParam = HeldItems.of(attacker, "damage", opts.st or st)
   local dHe = HeldItems.of(defender, "damage", opts.st or st)
   if HeldItems.TYPE_BOOST[aHe] == moveType then
-    if Types.isPhysical(moveType) then
+    if PhySpc.physical(move) then
       attack = math.floor(attack * (aParam + 100) / 100)
     else
       spAttack = math.floor(spAttack * (aParam + 100) / 100)
@@ -280,7 +281,7 @@ function Damage.base(attacker, defender, move, opts)
   local levelFactor = math.floor(2 * level / 5) + 2
   local damage = 0
 
-  if Types.isPhysical(moveType) then
+  if PhySpc.physical(move) then
     local atkStage = aStages.attack or 0
     if crit and atkStage <= 0 then atkStage = 0 end
     damage = Damage.applyStage(attack, atkStage)
@@ -306,7 +307,7 @@ function Damage.base(attacker, defender, move, opts)
 
   if moveType == Types.ID.MYSTERY then damage = 0 end
 
-  if not Types.isPhysical(moveType) and moveType ~= Types.ID.MYSTERY then
+  if not PhySpc.physical(move) and moveType ~= Types.ID.MYSTERY then
     local atkStage = aStages.spAtk or 0
     if crit and atkStage <= 0 then atkStage = 0 end
     damage = Damage.applyStage(spAttack, atkStage)
@@ -444,7 +445,7 @@ function Damage.calc(attacker, defender, moveId, opts)
     end
   end
 
-  local physical = Types.isPhysical(moveType)
+  local physical = PhySpc.physical(move)
   local foresight = opts.foresight
   if foresight == nil then foresight = defender.expIdentified and true or false end
   local dType1 = defender.type1

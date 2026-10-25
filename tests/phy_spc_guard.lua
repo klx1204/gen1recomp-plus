@@ -15,10 +15,13 @@ local function contains(path, needle)
 end
 
 contains("src/core/game3/battle/types.lua", "function Types.isPhysical")
-contains("src/core/game3/battle/damage.lua", "Types.isPhysical")
-contains("src/core/game3/battle/engine.lua", "Types.isPhysical")
-contains("src/core/game3/battle/effects/hit.lua", "Types.isPhysical")
+contains("src/core/game3/battle/types.lua", "Types.MOVE_CATEGORY = true")
+contains("src/core/game3/battle/damage.lua", "PhySpc.physical")
+contains("src/core/game3/battle/engine.lua", "PhySpc.physical")
+contains("src/core/game3/battle/effects/hit.lua", "PhySpc.physical")
+contains("src/core/game3/battle/moves.lua", "row.category")
 contains("src/core/game3/battle/moves.lua", "from_rom")
+contains("src/core/game3/battle/ui.lua", "PhySpcMenu")
 contains("src/core/game3/battle/ui.lua", "draw_move_menu")
 
 assert(read("src/core/game3/battle/phy_spc.lua"), "phy_spc.lua missing")

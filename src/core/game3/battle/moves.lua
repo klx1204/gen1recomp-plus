@@ -135,7 +135,10 @@ local function from_rom(numId)
   if not Moves._rom then return nil end
   local row = (Moves._linkRows and Moves._linkRows[numId]) or Moves._rom[numId]
   if not row then return nil end
-  local cat = Types.isPhysical(row.type) and "physical" or "special"
+  local cat = row.category
+  if cat ~= "physical" and cat ~= "special" and cat ~= "status" then
+    cat = Types.isPhysical(row.type) and "physical" or "special"
+  end
   if (row.power or 0) == 0 then cat = "status" end
   return {
     id = Moves.constName(numId) or error("no ROM name for move " .. tostring(numId)),
