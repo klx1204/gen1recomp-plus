@@ -45,9 +45,14 @@ function Types.name(id)
       assert(type(nativeTypeNames) == "table", "native RS type names invalid")
       nativeTypeSource = source
     end
-    return assert(nativeTypeNames[id], "native RS type name missing: " .. id)
+    return nativeTypeNames[id] or ("TYPE " .. tostring(id))
   end
-  return RomText.at("gTypeNames", id)
+  -- A mod can add a custom type whose index has no ROM name.  Callers are
+  -- menus and summaries, so fall back to a readable label instead of
+  -- throwing when that type is still referenced from a saved move.
+  local ok, name = pcall(RomText.at, "gTypeNames", id)
+  if ok and name then return name end
+  return "TYPE " .. tostring(id)
 end
 
 -- Alias used by battle menus / effects.
