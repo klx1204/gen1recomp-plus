@@ -27,12 +27,27 @@ Types.PHYSICAL = {
 
 Types.NATIVE_PHYSICAL = Types.PHYSICAL
 
+-- Names for custom type ids.  Unlike the overlay, this survives
+-- clearOverlay(): a saved move or Pokémon can still reference a custom type
+-- after the mod switches back to VANILLA or while a link battle rebuilds the
+-- chart from scratch.
+Types.CUSTOM_NAMES = {}
+local NATIVE_TYPE_MIN, NATIVE_TYPE_MAX = 0, 17
+
 local overlayNames
 local nativeTypeSource, nativeTypeNames
 function Types.name(id)
   id = assert(tonumber(id), "type id")
-  local custom = overlayNames and overlayNames[id]
+  local custom = Types.CUSTOM_NAMES[id]
   if custom then return custom end
+  custom = overlayNames and overlayNames[id]
+  if custom then return custom end
+  -- gTypeNames has exactly 18 entries.  Reading past its end lands in the
+  -- next ROM table (Emerald's first contest category shows up as "COOL"),
+  -- so custom ids must not fall through to the ROM lookup.
+  if id < NATIVE_TYPE_MIN or id > NATIVE_TYPE_MAX then
+    return "TYPE " .. tostring(id)
+  end
   local profile = require("src.core.game3.profile").forSession()
   if profile.id == "ruby" or profile.id == "sapphire" then
     local Pokemon = require("src.core.game3.pokemon")

@@ -90,6 +90,7 @@ PhySpc.effectiveness(move, target)
 
 -- src/core/game3/battle/types.lua
 Types.MOVE_CATEGORY = true
+Types.CUSTOM_NAMES = {}   -- id -> display name; survives clearOverlay()
 ```
 
 `Types.isPhysical(typeId)` stays for vanilla callers. New code uses
