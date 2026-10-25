@@ -22,6 +22,8 @@ jobs:
         run: luajit tests/phy_spc_test.lua
       - name: Upstream seam guard
         run: luajit tests/phy_spc_guard.lua
+      - name: Custom type names
+        run: luajit tests/type_names_test.lua
       - name: Syntax check
         run: |
           luajit -e "assert(loadfile('src/core/game3/battle/phy_spc.lua'))"
