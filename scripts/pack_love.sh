@@ -68,8 +68,8 @@ if [ -n "$BUILD_INFO" ]; then
 fi
 
 if [ -n "$VERSION" ]; then
-  printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' \
-    || fail "invalid version '$VERSION' (expected X.Y.Z)"
+  printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$' \
+    || fail "invalid version '$VERSION' (expected X.Y.Z or X.Y.Z-suffix)"
   stamp_dir="$(mktemp -d "$(dirname "$OUTPUT")/stamp-love.XXXXXX")"
   output_abs="$(cd "$(dirname "$OUTPUT")" && pwd)/$(basename "$OUTPUT")"
   trap 'rm -rf "$stamp_dir"' EXIT
