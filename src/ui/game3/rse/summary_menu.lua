@@ -520,16 +520,7 @@ local function drawMoves(m, Sm, mon, contest, detail)
     local mv = moves[i]
     local y = (i - 1) * 16 + 1
     if mv then
-      -- Per-move physical/special (the fork's MOVE_CATEGORY feature).  The
-      -- attempt to draw "PHY" beside the type badge collided with the move
-      -- name window, so the one-letter prefix goes inside it instead.
-      local prefix = ""
-      if not contest then
-        local category = mv.def and mv.def.category
-        prefix = category == "physical" and "P "
-          or category == "special" and "S " or ""
-      end
-      put(m, nw, prefix .. (Pokemon.moveName(mv.id) or ""), 0, y, 1)
+      put(m, nw, Pokemon.moveName(mv.id) or "", 0, y, 1)
       local text = "{PP}" .. pad(mv.pp, 2) .. "/" .. pad(mv.maxPp, 2)
       local state = ppState(mv.pp, mv.maxPp)
       put(m, pw, text, 44 - width(text), y, state + 9)
@@ -541,7 +532,17 @@ local function drawMoves(m, Sm, mon, contest, detail)
         -- directly; drawTypeIcon is for battle types and treats 18 as Fairy.
         drawFrame(m.moveTypes, 18 + (cm and cm.category or 0), 85, 32 + (i - 1) * 16)
       elseif mv.def then
-        drawTypeIcon(m, tonumber(mv.def.type) or 0, 85, 32 + (i - 1) * 16)
+        local iconY = 32 + (i - 1) * 16
+        drawTypeIcon(m, tonumber(mv.def.type) or 0, 85, iconY)
+        -- Physical/special bar to the right of the type badge: red, blue or
+        -- grey.  The official engine has no `category`, so it stays empty.
+        local PhySpcMenu = require("src.core.game3.battle.phy_spc_menu")
+        local rgb = PhySpcMenu.categoryColor(mv.def.category)
+        if rgb and love and love.graphics then
+          love.graphics.setColor(rgb[1], rgb[2], rgb[3], 1)
+          love.graphics.rectangle("fill", 118, iconY + 4, 2, 8)
+          love.graphics.setColor(1, 1, 1, 1)
+        end
       end
     else
       put(m, nw, "gText_OneDash", 0, y, 1)
@@ -594,14 +595,7 @@ local function drawMoves(m, Sm, mon, contest, detail)
     local acc = (tonumber(def.accuracy) or 0) == 0 and RomText.plain("gText_ThreeDashes") or pad(def.accuracy, 3)
     put(m, pa, power, 53, 1, 0)
     put(m, pa, acc, 53, 17, 0)
-    local desc = SummaryData.moveDescription(sel.id, Pokemon.moveName(sel.id))
-    local category = sel.def and sel.def.category
-    if category then
-      local label = category == "physical" and "PHY"
-        or category == "special" and "SPE" or "STA"
-      desc = label .. "  " .. desc
-    end
-    put(m, dw, desc, 6, 1, 0)
+    put(m, dw, SummaryData.moveDescription(sel.id, Pokemon.moveName(sel.id)), 6, 1, 0)
   end
 end
 

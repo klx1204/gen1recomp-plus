@@ -20,6 +20,7 @@ local Healthbox = require("src.core.game3.battle.healthbox")
 local Pokemon = require("src.core.game3.pokemon")
 local Window = require("src.ui.game3.window")
 local Types = require("src.core.game3.battle.types")
+local PhySpc = require("src.core.game3.battle.phy_spc")
 local PhySpcMenu = require("src.core.game3.battle.phy_spc_menu")
 local BallOpen = require("src.core.game3.battle.ball_open")
 local Oak = require("src.core.game3.battle.oak_advice")
@@ -1956,6 +1957,51 @@ local function phyColor(rgb)
   }
 end
 
+-- Keep the menu's own shadow/background and swap only the foreground.
+local function tintColors(rgb, base)
+  if not rgb then return base end
+  base = base or {}
+  return {
+    fg = { rgb[1], rgb[2], rgb[3], 1 },
+    shadow = base.shadow or { 0, 0, 0, 1 },
+    bg = base.bg or { 0, 0, 0, 0 },
+  }
+end
+
+-- The battler the move would hit right now.  During target selection the
+-- cursor wins, so doubles update the label as the cursor moves.
+local function moveTargetTypes(st)
+  if not st then return nil end
+  local t = Ui._target
+  local b
+  if t then
+    b = (t.cursor == 0 and st.player) or (st.battlers and st.battlers[t.cursor])
+  end
+  b = b or st.enemy
+  if not b then return nil end
+  local mon = b.mon or b
+  local species = mon.species or mon.speciesId or mon.num
+  if not species then return nil end
+  local ok, Pokemon = pcall(require, "src.core.game3.pokemon")
+  if not ok or not Pokemon.types then return nil end
+  return Pokemon.types(species)
+end
+
+-- Status moves never damage, so their type matchup must not tint the name.
+local function menuMoveColors(def, targetTypes, base)
+  if not def or (tonumber(def.power) or 0) == 0 then return base end
+  return tintColors(PhySpcMenu.colorFor(PhySpc.effectiveness(def, targetTypes)), base)
+end
+
+-- 2x8 bar: red physical, blue special, grey status.
+local function drawCategoryBar(category, x, y)
+  local rgb = PhySpcMenu.categoryColor(category)
+  if not rgb or not (love and love.graphics) then return end
+  love.graphics.setColor(rgb[1], rgb[2], rgb[3], 1)
+  love.graphics.rectangle("fill", x, y + 1, 2, 8)
+  love.graphics.setColor(1, 1, 1, 1)
+end
+
 local PP_STATE_TO_COLOR_INDEX = {
   [0] = 1,
   [1] = 2,
@@ -2578,10 +2624,17 @@ local function draw_move_menu_rs(st)
   local F, colors = battle_font(), rs_menu_colors()
   local cursor = Ui._swap and Ui._swap.cursor or Ui._moveIndex - 1
   require("src.ui.game3.rs.menu_cursor").draw(8 + 80 * (cursor % 2), 120 + 16 * math.floor(cursor / 2), 72)
+  local targetTypes = moveTargetTypes(st)
   for i = 1, 4 do
     local mv = mon and mon.moves and mon.moves[i]
     local label = mv and mv ~= 0 and mv ~= "" and Moves.displayName(mv) or "-"
     local labelColors = colors
+    if mv and mv ~= 0 and mv ~= "" then
+      local ok, def = pcall(Moves.get, mv)
+      if ok and def then
+        labelColors = menuMoveColors(def, targetTypes, colors)
+      end
+    end
     -- pokeruby/src/battle_controller_player.c:597
     if Ui._swap and i == Ui._moveIndex then
       labelColors = rs_swap_highlight(colors)
@@ -2602,11 +2655,7 @@ local function draw_move_menu_rs(st)
     F.draw(string.char(0xfc, 0x11, 2, 0xfc, 0x14, 6) .. string.format("%2d/%2d", pp, maxPp),
       200, 120, { colors = colors })
     F.draw(Types.name(Ui.moveTypeOf(mon, slot, def)), 184, 136, { colors = colors })
-    local target = st and st.enemy
-    local category, effectiveness, mult = PhySpcMenu.info(def, target)
-    F.draw(category .. " " .. effectiveness, 8, 152, {
-      small = true, colors = phyColor(PhySpcMenu.colorFor(mult)),
-    })
+    drawCategoryBar(PhySpc.label(def), 8, 152)
   end
 end
 
@@ -2618,11 +2667,20 @@ local function draw_move_menu_rse(st)
   local _, cy = BattleChrome.textOrigin(W.MOVE_NAME_1)
   _rseCursorCy = cy
   draw_move_cursors(rse_move_cursor_pos, rse_default_colors())
+  local targetTypes = moveTargetTypes(st)
+  local baseColors = rse_default_colors()
   for i = 1, 4 do
     local mv = mon and mon.moves and mon.moves[i]
     local label = "-"
-    if mv and mv ~= 0 and mv ~= "" then label = Moves.displayName(mv) end
-    rse_text(W.MOVE_NAME_1 + i - 1, label)
+    local colors = baseColors
+    if mv and mv ~= 0 and mv ~= "" then
+      label = Moves.displayName(mv)
+      local ok, def = pcall(Moves.get, mv)
+      if ok and def then
+        colors = menuMoveColors(def, targetTypes, baseColors)
+      end
+    end
+    rse_text(W.MOVE_NAME_1 + i - 1, label, 0, { colors = colors })
   end
   if Ui._swap then
     rse_text(W.SWITCH_PROMPT, RomText.plain("gText_BattleSwitchWhich"))
@@ -2645,12 +2703,9 @@ local function draw_move_menu_rse(st)
     local tw = F.measure(typeLabel, { font = "narrow" })
     local typeText = Types.name(Ui.moveTypeOf(mon, slot, def))
     rse_text(W.MOVE_TYPE, typeText, tw, { narrow = false })
-    local target = st and st.enemy
-    local category, effectiveness, mult = PhySpcMenu.info(def, target)
     local typeW = F.measure(typeText, { narrow = false })
-    rse_text(W.MOVE_TYPE, category .. " " .. effectiveness, tw + typeW + 4, {
-      narrow = true, colors = phyColor(PhySpcMenu.colorFor(mult)),
-    })
+    local tx, ty = BattleChrome.textOrigin(W.MOVE_TYPE)
+    drawCategoryBar(PhySpc.label(def), tx + tw + typeW + 4, ty)
   end
 end
 
@@ -2696,14 +2751,20 @@ local function draw_move_menu(st)
     { 8, 138 }, { 80, 138 },
   }
   draw_move_cursors(function(c) return cursorPos[c + 1] or cursorPos[1] end, FrlgFont.COLOR.NORMAL)
+  local targetTypes = moveTargetTypes(st)
   for i = 1, 4 do
     local mv = mon and mon.moves and mon.moves[i]
     -- pokefirered/src/data/text/move_names.h:2
     local label = "-"
+    local colors = FrlgFont.COLOR.NORMAL
     if mv and mv ~= 0 and mv ~= "" then
       label = Moves.displayName(mv)
+      local ok, def = pcall(Moves.get, mv)
+      if ok and def then
+        colors = menuMoveColors(def, targetTypes, colors)
+      end
     end
-    draw_menu_text(label, positions[i][1], positions[i][2], { small = true, colors = FrlgFont.COLOR.NORMAL })
+    draw_menu_text(label, positions[i][1], positions[i][2], { small = true, colors = colors })
   end
   if Ui._swap then
     draw_menu_text(RomText.plain("gText_BattleSwitchWhich"), 168, 122,
@@ -2725,12 +2786,8 @@ local function draw_move_menu(st)
     -- pokefirered/src/battle_controller_player.c:1413
     local typeText = RomText.plain("gText_MoveInterfaceType") .. Types.name(Ui.moveTypeOf(mon, slot, def))
     draw_menu_text(typeText, 168, 138, { small = true, colors = FrlgFont.COLOR.NORMAL })
-    local target = st and st.enemy
-    local category, effectiveness, mult = PhySpcMenu.info(def, target)
     local typeW = FrlgFont.measure(typeText, { small = true })
-    draw_menu_text(category .. " " .. effectiveness, 168 + typeW + 4, 138, {
-      small = true, colors = phyColor(PhySpcMenu.colorFor(mult)),
-    })
+    drawCategoryBar(PhySpc.label(def), 168 + typeW + 4, 138)
   end
 end
 
