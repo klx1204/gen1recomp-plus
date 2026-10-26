@@ -520,7 +520,21 @@ local function drawMoves(m, Sm, mon, contest, detail)
     local mv = moves[i]
     local y = (i - 1) * 16 + 1
     if mv then
-      put(m, nw, Pokemon.moveName(mv.id) or "", 0, y, 1)
+      -- Physical/special/status tint by move.  106/7/6 are the ROM palette's
+      -- dark red, blue and grey; the global palette is used because the move
+      -- window's own bank has no red.  The font/shadow stay the window's.
+      local name = Pokemon.moveName(mv.id) or ""
+      local category = mv.def and mv.def.category
+      local ink = category == "physical" and 106
+        or category == "special" and 104
+        or category == "status" and 6 or nil
+      if ink then
+        PalText.draw(name, nw.left * 8, nw.top * 8 + y, {
+          pal = m.palette, colors = { 0, ink, 4 },
+        })
+      else
+        put(m, nw, name, 0, y, 1)
+      end
       local text = "{PP}" .. pad(mv.pp, 2) .. "/" .. pad(mv.maxPp, 2)
       local state = ppState(mv.pp, mv.maxPp)
       put(m, pw, text, 44 - width(text), y, state + 9)
@@ -532,17 +546,7 @@ local function drawMoves(m, Sm, mon, contest, detail)
         -- directly; drawTypeIcon is for battle types and treats 18 as Fairy.
         drawFrame(m.moveTypes, 18 + (cm and cm.category or 0), 85, 32 + (i - 1) * 16)
       elseif mv.def then
-        local iconY = 32 + (i - 1) * 16
-        drawTypeIcon(m, tonumber(mv.def.type) or 0, 85, iconY)
-        -- Physical/special bar to the right of the type badge: red, blue or
-        -- grey.  The official engine has no `category`, so it stays empty.
-        local PhySpcMenu = require("src.core.game3.battle.phy_spc_menu")
-        local rgb = PhySpcMenu.categoryColor(mv.def.category)
-        if rgb and love and love.graphics then
-          love.graphics.setColor(rgb[1], rgb[2], rgb[3], 1)
-          love.graphics.rectangle("fill", 118, iconY + 4, 2, 8)
-          love.graphics.setColor(1, 1, 1, 1)
-        end
+        drawTypeIcon(m, tonumber(mv.def.type) or 0, 85, 32 + (i - 1) * 16)
       end
     else
       put(m, nw, "gText_OneDash", 0, y, 1)

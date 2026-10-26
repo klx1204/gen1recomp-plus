@@ -2654,8 +2654,9 @@ local function draw_move_menu_rs(st)
     F.draw(RomText.plain("gText_MoveInterfacePP"), 184, 120, { colors = colors })
     F.draw(string.char(0xfc, 0x11, 2, 0xfc, 0x14, 6) .. string.format("%2d/%2d", pp, maxPp),
       200, 120, { colors = colors })
-    F.draw(Types.name(Ui.moveTypeOf(mon, slot, def)), 184, 136, { colors = colors })
-    drawCategoryBar(PhySpc.label(def), 8, 152)
+    F.draw(Types.name(Ui.moveTypeOf(mon, slot, def)), 184, 136, {
+      colors = tintColors(PhySpcMenu.categoryColor(PhySpc.label(def)), colors),
+    })
   end
 end
 
@@ -2698,14 +2699,16 @@ local function draw_move_menu_rse(st)
     rse_text(W.PP_REMAINING, string.format("%2d/%2d", pp, maxPp), 0, { colors = rse_pp_colors(pp, maxPp) })
     -- pokeemerald/src/battle_controller_player.c:1496
     local typeLabel = RomText.plain("gText_MoveInterfaceType")
-    rse_text(W.MOVE_TYPE, typeLabel)
+    local word, slash = typeLabel:sub(1, -2), typeLabel:sub(-1)
     local F = battle_font()
+    rse_text(W.MOVE_TYPE, word, 0, {
+      colors = tintColors(PhySpcMenu.categoryColor(PhySpc.label(def)), baseColors),
+    })
+    local wordW = F.measure(word, { font = "narrow" })
+    rse_text(W.MOVE_TYPE, slash, wordW, { narrow = true, colors = baseColors })
     local tw = F.measure(typeLabel, { font = "narrow" })
     local typeText = Types.name(Ui.moveTypeOf(mon, slot, def))
-    rse_text(W.MOVE_TYPE, typeText, tw, { narrow = false })
-    local typeW = F.measure(typeText, { narrow = false })
-    local tx, ty = BattleChrome.textOrigin(W.MOVE_TYPE)
-    drawCategoryBar(PhySpc.label(def), tx + tw + typeW + 4, ty)
+    rse_text(W.MOVE_TYPE, typeText, tw, { narrow = false, colors = baseColors })
   end
 end
 
@@ -2784,10 +2787,16 @@ local function draw_move_menu(st)
     -- pokefirered/src/battle_controller_player.c:1402
     draw_menu_text(string.format("%2d/%2d", pp, maxPp), 202, 122, { small = false, colors = ppColors })
     -- pokefirered/src/battle_controller_player.c:1413
-    local typeText = RomText.plain("gText_MoveInterfaceType") .. Types.name(Ui.moveTypeOf(mon, slot, def))
-    draw_menu_text(typeText, 168, 138, { small = true, colors = FrlgFont.COLOR.NORMAL })
-    local typeW = FrlgFont.measure(typeText, { small = true })
-    drawCategoryBar(PhySpc.label(def), 168 + typeW + 4, 138)
+    local typeLabel = RomText.plain("gText_MoveInterfaceType")
+    local typeName = Types.name(Ui.moveTypeOf(mon, slot, def))
+    local word, slash = typeLabel:sub(1, -2), typeLabel:sub(-1)
+    local base = FrlgFont.COLOR.NORMAL
+    draw_menu_text(word, 168, 138, {
+      small = true,
+      colors = tintColors(PhySpcMenu.categoryColor(PhySpc.label(def)), base),
+    })
+    local wordW = FrlgFont.measure(word, { small = true })
+    draw_menu_text(slash .. typeName, 168 + wordW, 138, { small = true, colors = base })
   end
 end
 
