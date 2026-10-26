@@ -8,7 +8,7 @@ local Menu = {}
 -- Effectiveness tints.  `neutral` is absent on purpose: the battle menus
 -- keep their own default text colour for a 1x matchup.
 Menu.COLORS = {
-  immune = { 0.45, 0.45, 0.45 },
+  immune = { 0.68, 0.68, 0.68 },
   resist = { 0.78, 0.62, 0.05 },
   super = { 0.10, 0.58, 0.16 },
 }
