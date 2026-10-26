@@ -40,6 +40,41 @@ adds Fairy, the Gen 9 chart, 18 species, 18 moves and per-move categories.
 - custom type names and icons for mods (Fairy)
 - doubles target selection updates the tint live
 
+## Colour legend
+
+### Battle move menu
+
+Move names show the matchup against the current target:
+
+| Colour | Meaning |
+| --- | --- |
+| Green | Super effective |
+| Default | Neutral |
+| Yellow | Resisted |
+| Grey | No effect |
+
+`TYPE` shows the damage class:
+
+| Colour | Meaning |
+| --- | --- |
+| Red | Physical |
+| Blue | Special |
+| Grey | Status |
+
+In doubles, moving the target cursor updates both tints live.
+
+### Summary screen
+
+Move names use the damage-class colours:
+
+| Colour | Meaning |
+| --- | --- |
+| Dark red | Physical |
+| Blue | Special |
+| Grey | Status |
+
+Contest pages keep the native contest categories.
+
 ## Upstream
 
 - upstream: https://github.com/bryanthaboi/gen1recomp
