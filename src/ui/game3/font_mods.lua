@@ -127,8 +127,7 @@ local function tileSet(tiles)
   return set
 end
 
-local function loadTtf(def)
-  local spec = def.ttf
+local function loadOne(spec)
   if type(spec) ~= "table" then return nil end
   local Font = require("src.render.Font")
   local file = spec.file or Font.PLAINPIXEL
@@ -141,9 +140,19 @@ local function loadTtf(def)
   if obj.setFilter then pcall(obj.setFilter, obj, "nearest", "nearest") end
   return {
     font = obj, spacing = spec.spacing or 0, bold = spec.bold == true,
-    yOffset = spec.yOffset or (BASELINE_ROW - (obj.getBaseline and obj:getBaseline() or obj:getHeight() - 3)),
+    cjk = spec.cjk == true,
+    yOffset = spec.yOffset or 0,
     tiles = tileSet(spec.tiles), widths = {},
   }
+end
+
+local function loadTtf(def)
+  local spec = def.ttf
+  if type(spec) ~= "table" then return nil end
+  local normal = loadOne(spec.normal or spec)
+  local small = loadOne(spec.small or spec) or normal
+  if not normal then return nil end
+  return { normal = normal, small = small }
 end
 
 function FontMods.install(def)
@@ -171,15 +180,26 @@ function FontMods.overrides()
   return state.rev
 end
 
-function FontMods.ttfEligible(ch)
-  local ttf = state.ttf
-  if not ttf or ttf.tiles[ch] then return false end
-  local cp = decodeAt(ch, 1)
-  return cp ~= nil and ((cp >= 0x20 and cp <= 0x7E) or (cp >= 0xC0 and cp <= 0x24F))
+local function ttfFor(small)
+  local set = state.ttf
+  if not set then return nil end
+  return (small and set.small) or set.normal
 end
 
-function FontMods.ttfAdvance(ch)
-  local ttf = state.ttf
+function FontMods.ttfEligible(ch, small)
+  local ttf = ttfFor(small)
+  if not ttf or ttf.tiles[ch] then return false end
+  local cp = decodeAt(ch, 1)
+  if cp == nil then return false end
+  -- A CJK font only takes over CJK codepoints; ASCII keeps the ROM atlas so
+  -- the rest of the UI stays pixel-perfect.
+  if ttf.cjk then return cp >= 0x2E80 and cp <= 0x9FFF end
+  return (cp >= 0x20 and cp <= 0x7E) or (cp >= 0xC0 and cp <= 0x24F)
+end
+
+function FontMods.ttfAdvance(ch, small)
+  local ttf = ttfFor(small)
+  if not ttf then return 0 end
   local w = ttf.widths[ch]
   if not w then
     w = ttf.font:getWidth(ch) + ttf.spacing + (ttf.bold and 1 or 0)
@@ -188,8 +208,9 @@ function FontMods.ttfAdvance(ch)
   return w
 end
 
-function FontMods.ttfDraw(ch, x, y, fg, shadow, setColor)
-  local ttf = state.ttf
+function FontMods.ttfDraw(ch, x, y, fg, shadow, setColor, small)
+  local ttf = ttfFor(small)
+  if not ttf then return end
   local previous = love.graphics.getFont()
   love.graphics.setFont(ttf.font)
   local ty = y + ttf.yOffset
@@ -205,5 +226,6 @@ function FontMods.ttfDraw(ch, x, y, fg, shadow, setColor)
   end
   love.graphics.setFont(previous)
 end
+
 
 return FontMods

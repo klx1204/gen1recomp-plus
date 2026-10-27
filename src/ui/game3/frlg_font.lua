@@ -1221,8 +1221,8 @@ function FrlgFont.measure(text, opts)
       line = 0
     elseif ttype == "char" then
       local id = FrlgFont.glyphId(val)
-      if not FontMods.glyph(id) and FontMods.ttfEligible(val) then
-        line = line + FontMods.ttfAdvance(val)
+      if not FontMods.glyph(id) and FontMods.ttfEligible(val, activeOpts.small) then
+        line = line + FontMods.ttfAdvance(val, activeOpts.small)
       else
         line = line + japanese_step(id, FrlgFont.advance(id, activeOpts), minW, jpn, activeOpts, activeOpts.small)
       end
@@ -1338,7 +1338,25 @@ end
 -- opts.maxWidth clips (CopyGlyphToWindow). opts.colors = COLOR.NORMAL etc.
 -- opts.limitChars: only draw first N printable characters (typewriter).
 -- opts.small: use FONT_SMALL (party menu).
+local function installCjkFont()
+  if FrlgFont._cjkFontTried then return end
+  FrlgFont._cjkFontTried = true
+  local fs = love and love.filesystem
+  if not (fs and fs.getInfo) then return end
+  local small = fs.getInfo("assets/fonts/fusion-pixel-8.otf")
+  local normal = fs.getInfo("assets/fonts/fusion-pixel-12.otf")
+  if small and normal then
+    FontMods.install({
+      ttf = {
+        normal = { file = "assets/fonts/fusion-pixel-12.otf", size = 12, cjk = true },
+        small = { file = "assets/fonts/fusion-pixel-8.otf", size = 8, cjk = true, yOffset = -2 },
+      },
+    })
+  end
+end
+
 function FrlgFont.draw(text, x, y, opts)
+  installCjkFont()
   opts = opts or {}
   local activeOpts = opts
   local face = faceFor(opts)
@@ -1431,11 +1449,11 @@ function FrlgFont.draw(text, x, y, opts)
       local nativeFace = face and face.nativeIndexed and faceFor(activeOpts, id)
       local nativeId = id >= FrlgFont.JAPANESE_BASE and id - FrlgFont.JAPANESE_BASE or id
       local modGlyph = FontMods.glyph(id)
-      local ttfChar = ttype == "char" and not modGlyph and FontMods.ttfEligible(val) and val or nil
+      local ttfChar = ttype == "char" and not modGlyph and FontMods.ttfEligible(val, useSmall) and val or nil
       if modGlyph or ttfChar then nativeFace = nil end
       local adv
       if ttfChar then
-        adv = FontMods.ttfAdvance(ttfChar)
+        adv = FontMods.ttfAdvance(ttfChar, useSmall)
       elseif modGlyph then
         adv = modGlyph.advance
       elseif nativeFace then
@@ -1468,7 +1486,7 @@ function FrlgFont.draw(text, x, y, opts)
             love.graphics.rectangle("fill", dx, dy, adv, pitch)
           end
           if ttfChar then
-            FontMods.ttfDraw(ttfChar, dx, dy, curCol.fg, curCol.shadow, set_col)
+            FontMods.ttfDraw(ttfChar, dx, dy, curCol.fg, FrlgFont.COLOR.NORMAL.shadow, set_col, useSmall)
           else
           local aq, ash = gat and gat.fg[aid], gat and gat.sh[aid]
           -- R/S native faces pack fg, shadow and embedded colours into one
