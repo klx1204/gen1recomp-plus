@@ -663,7 +663,10 @@ local function collectGame3Actors(game, mapDef, camX, camY, px, py, facing, walk
       a.sprite = eo.sprite or spriteNameForObj(eo.def or {})
       a.graphicsId = eo.graphicsId or (eo.def and (eo.def.graphicsId or eo.def.graphics))
       a.alpha = Objects.fadeAlpha(eo)
-      a.draw = eo.foreign and eo.draw or nil
+      -- Any event object may bring its own painter; visible wild encounters
+      -- put one on a runtime NPC.  Events without a painter keep the normal
+      -- sprite path below.
+      a.draw = eo.draw or nil
       a.priority = nil
       a.subpriority = nil
       actors[#actors + 1] = a
@@ -710,6 +713,8 @@ local function collectGame3Actors(game, mapDef, camX, camY, px, py, facing, walk
             facing = facingFromObj(obj),
             sprite = spriteNameForObj(obj),
             graphicsId = obj.graphicsId or obj.graphics,
+            draw = obj.draw,
+            renderer = obj.renderer,
           }
         end
       end
