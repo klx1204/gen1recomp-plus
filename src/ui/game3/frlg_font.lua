@@ -1343,13 +1343,13 @@ local function installCjkFont()
   FrlgFont._cjkFontTried = true
   local fs = love and love.filesystem
   if not (fs and fs.getInfo) then return end
-  local small = fs.getInfo("assets/fonts/fusion-pixel-8.otf")
+  local small = fs.getInfo("assets/fonts/fusion-pixel-10.otf")
   local normal = fs.getInfo("assets/fonts/fusion-pixel-12.otf")
   if small and normal then
     FontMods.install({
       ttf = {
         normal = { file = "assets/fonts/fusion-pixel-12.otf", size = 12, cjk = true },
-        small = { file = "assets/fonts/fusion-pixel-8.otf", size = 8, cjk = true, yOffset = -2 },
+        small = { file = "assets/fonts/fusion-pixel-10.otf", size = 10, cjk = true, yOffset = 0 },
       },
     })
   end
