@@ -1124,7 +1124,9 @@ function Objects.forDraw()
     local eo = Objects._byId[lid]
     -- src/event_object_movement.c:8014
     if eo and eo.visible and not eo.hidden and not eo.invisible
-        and (eo.foreignMap ~= nil or eo.moving or eo.scriptBusy or (Objects._tracks and Objects._tracks[eo.localId] ~= nil) or not offMap(Objects._bounds, eo)) then
+        -- An object with its own painter (visible wild encounters) is always
+        -- drawn; the bounds cache only refreshes when the player steps.
+        and (eo.draw ~= nil or eo.foreignMap ~= nil or eo.moving or eo.scriptBusy or (Objects._tracks and Objects._tracks[eo.localId] ~= nil) or not offMap(Objects._bounds, eo)) then
       n = n + 1
       list[n] = eo
     end

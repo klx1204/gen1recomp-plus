@@ -41,6 +41,7 @@ adds Fairy, the Gen 9 chart, 18 species, 18 moves and per-move categories.
 - doubles target selection updates the tint live
 - summary SKILLS page: A cycles STATS / IVs / EVs
 - event objects may carry their own painter (`eo.draw`), used by the visible wild mod
+- such an object is always in the draw list, even before the player moves
 
 ## Colour legend
 
