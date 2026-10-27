@@ -39,6 +39,7 @@ adds Fairy, the Gen 9 chart, 18 species, 18 moves and per-move categories.
 - summary move names tinted by damage class
 - custom type names and icons for mods (Fairy)
 - doubles target selection updates the tint live
+- summary SKILLS page: A cycles STATS / IVs / EVs
 
 ## Colour legend
 
@@ -74,6 +75,12 @@ Move names use the damage-class colours:
 | Grey | Status |
 
 Contest pages keep the native contest categories.
+
+### IVs and EVs
+
+On the SKILLS page, `A` cycles the numbers between the battle stats, the IVs
+(0–31) and the EVs (0–255). The label in the top bar names the current mode.
+Changing Pokémon or reopening the summary goes back to the battle stats.
 
 ## Upstream
 

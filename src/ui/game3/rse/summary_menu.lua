@@ -371,6 +371,12 @@ end
 local function drawTitles(m, page, detail, Sm)
   local titles = { [0] = "gText_PkmnInfo", "gText_PkmnSkills", "gText_BattleMoves", "gText_ContestMoves" }
   put(m, win(m, page), titles[page], 2, 1, 1)
+  -- SKILLS cycles STATS -> IVs -> EVs on A; name the mode while it is on.
+  local statsMode = tonumber(Sm and Sm.statsMode) or 0
+  if page == 1 and statsMode ~= 0 then
+    local label = statsMode == 1 and "IVs" or "EVs"
+    put(m, win(m, page), label, 218 - width(label), 1, 0)
+  end
   local prompt
   if page == 0 then prompt = { W.PROMPT_CANCEL, "gText_Cancel2" }
   elseif page >= 2 and not detail then prompt = { W.PROMPT_INFO, "gText_Info" }
@@ -457,9 +463,18 @@ local function drawSkills(m, Sm, mon)
     or RomText.plain("gText_RibbonsVar1", { stringVars = { string.format("%2d", ribbons) } })
   put(m, pageWin(m, "skills", 1), ribText, math.floor((70 - width(ribText)) / 2) + 6, 1, 0)
   local stats = mon.stats or {}
-  local function stat(k, alt) return tonumber(mon[alt] or mon[k] or stats[alt] or stats[k]) or 0 end
+  -- SKILLS cycles STATS -> IVs -> EVs on A (emerald-3ds-fairy 0015).
+  local mode = tonumber(Sm and Sm.statsMode) or 0
+  local ivs = type(mon.ivs) == "table" and mon.ivs or {}
+  local evs = type(mon.evs) == "table" and mon.evs or {}
+  local function stat(k, alt)
+    if mode == 1 then return tonumber(ivs[k]) or 0 end
+    if mode == 2 then return tonumber(evs[k]) or 0 end
+    return tonumber(mon[alt] or mon[k] or stats[alt] or stats[k]) or 0
+  end
   local hp, maxHp = tonumber(mon.hp) or 0, tonumber(mon.maxHp or stats.hp) or 0
-  local left = pad(hp, 3) .. "/" .. pad(maxHp, 3) .. "\n" .. pad(stat("atk", "attack"), 7) .. "\n" .. pad(stat("def", "defense"), 7)
+  local hpCell = mode == 0 and (pad(hp, 3) .. "/" .. pad(maxHp, 3)) or pad(stat("hp"), 7)
+  local left = hpCell .. "\n" .. pad(stat("atk", "attack"), 7) .. "\n" .. pad(stat("def", "defense"), 7)
   put(m, pageWin(m, "skills", 2), left, 4, 1, 0)
   local right = pad(stat("spa", "spAtk"), 3) .. "\n" .. pad(stat("spd", "spDef"), 3) .. "\n" .. pad(stat("spe", "speed"), 3)
   put(m, pageWin(m, "skills", 3), right, 2, 1, 0)

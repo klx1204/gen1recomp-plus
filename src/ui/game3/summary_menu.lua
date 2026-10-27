@@ -33,6 +33,10 @@ SummaryMenu.open = false
 SummaryMenu._party = nil
 SummaryMenu._cursor = 1
 SummaryMenu._page = 0
+-- SKILLS shows the battle stats by default; A cycles through the mon's IVs
+-- and EVs without leaving the page (emerald-3ds-fairy 0015).
+SummaryMenu.STATS_MODE = { STATS = 0, IVS = 1, EVS = 2 }
+SummaryMenu.statsMode = 0
 SummaryMenu._moveCursor = 1
 SummaryMenu._swapSlot = nil
 SummaryMenu._onClose = nil
@@ -217,6 +221,7 @@ function SummaryMenu.openMenu(party, startIndex, opts)
   SummaryMenu._onSelectMove = opts.onSelectMove
   SummaryMenu._hmNotice = false
   SummaryMenu._moveCursor = 1
+  SummaryMenu.statsMode = 0
   SummaryMenu._swapSlot = nil
   SummaryMenu._slide.active = false
   -- pokefirered/src/pokemon_summary_screen.c:1046
@@ -267,6 +272,7 @@ local function change_mon(delta)
   SummaryMenu._cursor = nextCursor
   SummaryMenu._moveCursor = 1
   SummaryMenu._swapSlot = nil
+  SummaryMenu.statsMode = 0
   local mon = current_mon()
   if mon and Pokemon.isEgg(mon) then
     SummaryMenu._page = PAGE_EGG
@@ -613,6 +619,11 @@ function SummaryMenu.handleInput(input)
     elseif SummaryMenu._page == PAGE_MOVES then
       pcall(function() require("src.core.game3.audio").playSe(5) end)
       start_slide("detail", PAGE_MOVES_INFO, 1)
+    elseif SummaryMenu._page == PAGE_SKILLS then
+      -- emerald-3ds-fairy 0015: STATS -> IVs -> EVs, wrapping.  Nothing else
+      -- uses A on this page.
+      pcall(function() require("src.core.game3.audio").playSe(5) end)
+      SummaryMenu.statsMode = ((tonumber(SummaryMenu.statsMode) or 0) + 1) % 3
     end
   elseif input:wasPressed("b") or input:wasPressed("start") then
     SummaryMenu.close()
@@ -870,26 +881,42 @@ local function draw_skill_bars(mon, dx)
 end
 
 local function draw_page_skills(mon)
-  local curHp = tonumber(mon.hp or mon.currentHp) or 0
+  local mode = tonumber(SummaryMenu.statsMode) or 0
+  local unpack = table.unpack or unpack
+  local ivs = type(mon.ivs) == "table" and mon.ivs or {}
+  local evs = type(mon.evs) == "table" and mon.evs or {}
+  -- IV/EV keys follow pokemon.lua's mon.ivs/mon.evs layout.
+  local function picked(ivKey, ...)
+    if mode == 1 then return tonumber(ivs[ivKey]) or 0 end
+    if mode == 2 then return tonumber(evs[ivKey]) or 0 end
+    local names = { ... }
+    for i = 1, #names do
+      local v = tonumber(mon[names[i]])
+      if v then return v end
+    end
+    return 0
+  end
+
+  local curHp = picked("hp", "hp", "currentHp")
   local maxHp = tonumber(mon.maxHp or mon.maxhp) or 1
   local hx, hy = cxy("hpText", 174, 20)
-  local hpStr = string.format("%d/%d", curHp, maxHp)
+  local hpStr = mode == 0 and string.format("%d/%d", curHp, maxHp) or string.format("%d", curHp)
   -- pokefirered/src/pokemon_summary_screen.c:2170
   draw_text(hpStr, hx + SummaryMenu.rightAlign(hpStr, 63), hy, 63, "NORMAL")
 
   draw_skill_bars(mon, 0)
 
   local stats = {
-    { val = mon.attack or mon.atk or 0, coord = "atk", fy = 38 },
-    { val = mon.defense or mon.def or 0, coord = "def", fy = 51 },
-    { val = mon.spAtk or mon.spatk or 0, coord = "spAtk", fy = 64 },
-    { val = mon.spDef or mon.spdef or 0, coord = "spDef", fy = 77 },
-    { val = mon.speed or mon.spe or 0, coord = "spd", fy = 90 },
+    { iv = "atk", names = { "attack", "atk" }, coord = "atk", fy = 38 },
+    { iv = "def", names = { "defense", "def" }, coord = "def", fy = 51 },
+    { iv = "spa", names = { "spAtk", "spatk" }, coord = "spAtk", fy = 64 },
+    { iv = "spd", names = { "spDef", "spdef" }, coord = "spDef", fy = 77 },
+    { iv = "spe", names = { "speed", "spe" }, coord = "spd", fy = 90 },
   }
 
   for _, st in ipairs(stats) do
     local x, y = cxy(st.coord, 210, st.fy)
-    local str = string.format("%d", tonumber(st.val) or 0)
+    local str = string.format("%d", picked(st.iv, unpack(st.names)))
     -- pokefirered/src/pokemon_summary_screen.c:2502
     draw_text(str, x + SummaryMenu.rightAlign(str, 27), y, 27, "NORMAL")
   end
@@ -1150,6 +1177,19 @@ local function draw_top_bar_text(page, isEgg, dx)
     colors = FrlgFont.COLOR.WHITE,
     small = false,
   })
+
+  -- SKILLS: say which flavour of numbers is on screen (A cycles them).
+  if page == PAGE_SKILLS then
+    local mode = tonumber(SummaryMenu.statsMode) or 0
+    if mode ~= 0 then
+      local label = mode == 1 and "IVs" or "EVs"
+      local tw = FrlgFont.measure(title) or 80
+      FrlgFont.draw(label, 4 + tw + 6 + dx, 1, {
+        colors = FrlgFont.COLOR.WHITE,
+        small = false,
+      })
+    end
+  end
 
   local ctrl = get_controls_str(page, isEgg)
   PokedexChrome.drawControlInfo(ctrl, 236 + dx, 1)
