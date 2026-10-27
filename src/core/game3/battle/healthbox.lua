@@ -281,6 +281,16 @@ local function healthbox_gender(mon)
   return g
 end
 
+-- CJK names are 10px wide per glyph, so the gender symbol lands too close to
+-- the last character.  English names keep the cart's spacing.
+local function hasCjk(s)
+  return type(s) == "string" and s:find("[\228-\233]") ~= nil
+end
+
+local function namePad(name)
+  return hasCjk(name) and 2 or 0
+end
+
 local function draw_name_gender(name, gender, x, y)
   if rs_layout() then
     -- pokeruby/src/battle_interface.c:1546
@@ -289,7 +299,7 @@ local function draw_name_gender(name, gender, x, y)
     local colors = rs_text_colors()
     draw_rs_row(name, x, top + 8, 56, colors, true)
     if gender then
-      local offset = FrlgFont.measure(name, RS_MEASURE_OPTS)
+      local offset = FrlgFont.measure(name, RS_MEASURE_OPTS) + namePad(name)
       local symbol = gender == "M" and "♂" or "♀"
       if offset < 56 then draw_rs_row(symbol, x + offset, top + 8, 56 - offset, rs_text_colors(gender)) end
     end
@@ -297,7 +307,7 @@ local function draw_name_gender(name, gender, x, y)
   end
   FrlgFont.draw(name, x, y, small_opts(HB_TEXT))
   if not gender then return end
-  local nw = FrlgFont.measure(name, { small = true })
+  local nw = FrlgFont.measure(name, { small = true }) + namePad(name)
   -- ♂/♀ join arrow↔circle mostly via shadow pixels; need HB shadow on cream
   -- (FrlgFont.COLOR.MALE shadow is nearly invisible here and splits the glyph).
   if gender == "M" then
@@ -560,7 +570,7 @@ local function draw_doubles(id, battler, st, opts)
   local ty = tlY + TEXT_Y
   local gender = healthbox_gender(battler.mon)
   -- pokefirered/src/battle_interface.c:1531
-  draw_name_gender(name, gender, tlX + (isPlayer and 16 or 8), ty)
+  draw_name_gender(name, gender, tlX + (isPlayer and 16 or 8), ty + 1)
   draw_level(lv, tlX, ty, isPlayer and PLAYER_LVL_X or ENEMY_LVL_X,
     battler.mon, isPlayer and "player" or "enemy", st)
   if statused then
@@ -685,7 +695,7 @@ function Healthbox.draw(side, battler, opts)
   local ailment = shown_ailment(p, battler)
 
   if isPlayer then
-    draw_name_gender(name, gender, tlX + 16, ty)
+    draw_name_gender(name, gender, tlX + 16, ty + 1)
     draw_level(lv, tlX, ty, lvlX, battler.mon, side, bst)
     if ailment >= 1 and ailment <= 6 then
       -- pokefirered/src/battle_interface.c:1608
@@ -716,7 +726,7 @@ function Healthbox.draw(side, battler, opts)
     end
     BattleChrome.drawExpBar(tlX + 32, tlY + 32, expRatio)
   else
-    draw_name_gender(name, gender, tlX + 8, ty)
+    draw_name_gender(name, gender, tlX + 8, ty + 1)
     draw_level(lv, tlX, ty, lvlX, battler.mon, side, bst)
     if ailment >= 1 and ailment <= 6 then
       -- pokefirered/src/battle_interface.c:1614

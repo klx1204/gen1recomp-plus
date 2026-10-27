@@ -1486,7 +1486,7 @@ function FrlgFont.draw(text, x, y, opts)
             love.graphics.rectangle("fill", dx, dy, adv, pitch)
           end
           if ttfChar then
-            FontMods.ttfDraw(ttfChar, dx, dy, curCol.fg, FrlgFont.COLOR.NORMAL.shadow, set_col, useSmall)
+            FontMods.ttfDraw(ttfChar, dx, dy, curCol.fg, curCol.shadow, set_col, useSmall)
           else
           local aq, ash = gat and gat.fg[aid], gat and gat.sh[aid]
           -- R/S native faces pack fg, shadow and embedded colours into one
