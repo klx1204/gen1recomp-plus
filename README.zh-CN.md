@@ -1,20 +1,21 @@
-# gen1recomp-ps-split
+# gen1recomp-plus
 
 [English](README.md)
 
-[gen1recomp](https://github.com/bryanthaboi/gen1recomp) 的 fork，
-为 Gen 3 战斗引擎加入按招式的物理/特殊分家。
+[gen1recomp](https://github.com/bryanthaboi/gen1recomp) 的 fork，面向 Gen 3
+五作：按招式的物理/特殊分家、带 Fairy 的 Gen 9 相克表、中文宝可梦名和招式名、
+摘要页的个体值/努力值，以及 mod 自绘事件对象所需的接口。
 
 ## 下载
 
-[最新 Release](https://github.com/klx1204/gen1recomp-ps-split/releases)
+[最新 Release](https://github.com/klx1204/gen1recomp-plus/releases)
 
 `.love` 需要 LÖVE 11.x，ROM 由玩家自己提供。
 
 ## 运行
 
 ```sh
-love gen1recomp-ps-split-<tag>.love
+love gen1recomp-plus-<tag>.love
 ```
 
 从源码运行：
@@ -86,7 +87,7 @@ love .
 ## 上游
 
 - upstream: https://github.com/bryanthaboi/gen1recomp
-- 分支：`ps-split`
+- 分支：`plus`
 - 每日 `upstream-sync` 合并 `upstream/dev`
 
 维护规则见 `FORK.md` 和 `AGENTS.md`。

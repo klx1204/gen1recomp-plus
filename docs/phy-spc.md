@@ -120,9 +120,9 @@ luajit tests/phy_spc_guard.lua
 
 ## Upstream sync
 
-- `origin`: https://github.com/klx1204/gen1recomp-ps-split
+- `origin`: https://github.com/klx1204/gen1recomp-plus
 - `upstream`: https://github.com/bryanthaboi/gen1recomp
-- branch: `ps-split`
+- branch: `plus`
 - enable `rerere`; merge `upstream/dev` daily via `upstream-sync.yml`.
 
 If the merge conflicts on the seams above, prefer adapting

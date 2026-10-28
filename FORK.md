@@ -1,6 +1,6 @@
 # Fork note
 
-This checkout is **`gen1recomp-ps-split`**, a minimal fork of
+This checkout is **`gen1recomp-plus`**, a minimal fork of
 [gen1recomp](https://github.com/bryanthaboi/gen1recomp).
 
 It exists for one feature:
@@ -19,9 +19,9 @@ https://github.com/klx1204/types-mod-gen1recomp
 
 ## Branches
 
-- `origin` = https://github.com/klx1204/gen1recomp-ps-split
+- `origin` = https://github.com/klx1204/gen1recomp-plus
 - `upstream` = https://github.com/bryanthaboi/gen1recomp
-- maintenance branch: `ps-split`
+- maintenance branch: `plus`
 
 Never push to `upstream`.
 

@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ps-split
+          ref: plus
           fetch-depth: 0
 
       - name: Fetch upstream
@@ -48,7 +48,7 @@ jobs:
 
       - name: Push
         if: steps.merge.outputs.changed == 'true'
-        run: git push origin ps-split
+        run: git push origin plus
 
       - name: Report conflict
         if: failure()
@@ -57,5 +57,5 @@ jobs:
         run: |
           gh issue create \
             --title "upstream sync failed" \
-            --body "The scheduled merge of upstream/dev into ps-split failed. Resolve the conflict locally, run the fork tests, and push ps-split." \
+            --body "The scheduled merge of upstream/dev into plus failed. Resolve the conflict locally, run the fork tests, and push plus." \
             || true

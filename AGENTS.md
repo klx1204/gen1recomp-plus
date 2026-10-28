@@ -1,4 +1,4 @@
-# AGENTS.md — gen1recomp-ps-split
+# AGENTS.md — gen1recomp-plus
 
 ## What this repo is
 
@@ -98,9 +98,9 @@ Types.CUSTOM_NAMES = {}   -- id -> display name; survives clearOverlay()
 
 ## Upstream sync
 
-- `origin` = https://github.com/klx1204/gen1recomp-ps-split
+- `origin` = https://github.com/klx1204/gen1recomp-plus
 - `upstream` = https://github.com/bryanthaboi/gen1recomp
-- maintenance branch: `ps-split`
+- maintenance branch: `plus`
 - upstream branch: `upstream/dev`
 
 Rules:
@@ -111,14 +111,14 @@ Rules:
    conflict resolutions.
 4. The daily `upstream-sync` workflow:
    - fetches `upstream/dev`;
-   - merges it into `ps-split`;
+   - merges it into `plus`;
    - runs the test suite;
    - pushes only when the merge and tests pass;
    - opens an issue on conflict.
 5. If a merge cannot be automated, resolve it by hand and keep the patch
    surface small. A `patches/` snapshot may be regenerated with
-   `git format-patch upstream/dev..ps-split -o patches/`.
-6. Tag releases as `ps-split-<upstream-short-sha>` and record the upstream
+   `git format-patch upstream/dev..plus -o patches/`.
+6. Tag releases as `plus-<upstream-short-sha>` and record the upstream
    commit in the release notes.
 
 ## Tests
@@ -156,5 +156,5 @@ engine.
 - [ ] `luajit tests/phy_spc_guard.lua` passes.
 - [ ] `luajit tests/run_tests.lua` passes (when a generated cache is available).
 - [ ] No local absolute paths.
-- [ ] `git diff upstream/dev..ps-split --stat` is still small.
+- [ ] `git diff upstream/dev..plus --stat` is still small.
 - [ ] The mod repo's compatibility matrix matches this release.

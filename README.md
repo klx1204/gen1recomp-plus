@@ -1,20 +1,22 @@
-# gen1recomp-ps-split
+# gen1recomp-plus
 
 [中文](README.zh-CN.md)
 
-A fork of [gen1recomp](https://github.com/bryanthaboi/gen1recomp) that adds
-per-move physical/special to the Gen 3 battle engine.
+A fork of [gen1recomp](https://github.com/bryanthaboi/gen1recomp) for the Gen 3
+games: per-move physical/special, a Gen 9 type chart with Fairy, Chinese
+species and move names, IV/EV on the summary screen, and hooks a mod needs to
+draw its own event objects.
 
 ## Download
 
-[Latest release](https://github.com/klx1204/gen1recomp-ps-split/releases)
+[Latest release](https://github.com/klx1204/gen1recomp-plus/releases)
 
 The `.love` needs LÖVE 11.x and a Gen 3 ROM you provide yourself.
 
 ## Run
 
 ```sh
-love gen1recomp-ps-split-<tag>.love
+love gen1recomp-plus-<tag>.love
 ```
 
 From source:
@@ -87,7 +89,7 @@ Changing Pokémon or reopening the summary goes back to the battle stats.
 ## Upstream
 
 - upstream: https://github.com/bryanthaboi/gen1recomp
-- branch: `ps-split`
+- branch: `plus`
 - daily `upstream-sync` merges `upstream/dev`
 
 See `FORK.md` and `AGENTS.md` for the maintenance rules.

@@ -1,9 +1,9 @@
 name: phy-spc-ci
 on:
   push:
-    branches: [ps-split]
+    branches: [plus]
   pull_request:
-    branches: [ps-split]
+    branches: [plus]
   workflow_dispatch:
 
 permissions:
