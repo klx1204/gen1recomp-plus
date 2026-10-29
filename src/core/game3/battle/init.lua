@@ -2026,6 +2026,9 @@ local function award_catch_exp(catchRes, onDone)
     st._catchExpPending = nil
     return false
   end
+  -- Same bookkeeping as the post-win path: without it a Pokemon that levels
+  -- from catch EXP is never offered its evolution.
+  merge_leveled_set(ExpSeq.leveledSet())
   Battle._onExpDone = function()
     st._catchExpPending = nil
     if Battle._active and Battle._st == st and onDone then onDone() end
