@@ -26,7 +26,29 @@ end
 
 -- pokeemerald/src/pokenav_region_map.c:174
 function NavMap.new(shell)
-  local s = RegionMap.newState({ session = shell.session, mode = "wall" })
+  local session = shell.session
+  local FieldMoves = require("src.core.game3.field_moves")
+  local function flyMon()
+    return FieldMoves.partyMoveUser(session and session.party, FieldMoves.MOVES.FLY,
+      { save = session })
+  end
+  local s = RegionMap.newState({
+    session = session,
+    mode = "wall",
+    canFly = function() return flyMon() ~= nil end,
+    onFly = function(sec, info)
+      local mon = flyMon()
+      if not mon then return end
+      local Field = require("src.core.game3.field")
+      info = info or {}
+      info.dest = RegionMap.flyWarpDestination(session, sec, info.posWithinMapSec)
+      pcall(function()
+        local Stack = require("src.ui.game3.stack")
+        Stack.pop(RegionMap.ID)
+      end)
+      Field.flyTo(sec, mon, info)
+    end,
+  })
   local self = setmetatable({ shell = shell, session = shell.session, rm = s, bg1Y = 0, zoomTextSprites = {} }, NavMap)
   local cur = require("src.core.game3.rse.match_call").currentMapsec()
   self.zoomDisabled = isEventIsland(cur or -1)

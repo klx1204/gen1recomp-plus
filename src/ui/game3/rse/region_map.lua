@@ -368,6 +368,9 @@ local function newState(opts)
     mapDef = opts.mapDef,
     onPick = opts.onPick,
     onClose = opts.onClose,
+    onFly = opts.onFly,
+    canFly = opts.canFly,
+    flyPrompt = false,
     frameType = tonumber(opts.frameType),
     pal = Pal.new(),
     state = 0,
@@ -568,7 +571,17 @@ local function wallFrame(s, inp)
     local r = RegionMap.inputCallback(s, inp)
     if r == INPUT.MOVE_END then
       s.nameShown = s.mapSecType ~= TYPE.NONE
-    elseif r == INPUT.A or r == INPUT.B then
+    elseif r == INPUT.A then
+      local canFly = s.canFly
+      local flyable = s.mapSecType == TYPE.CITY_CANFLY or s.mapSecType == TYPE.BATTLE_FRONTIER
+      if flyable and canFly and canFly(s.mapSecId) and s.onFly then
+        s.onFly(s.mapSecId, { posWithinMapSec = s.posWithinMapSec })
+        s.chose = true
+        s.state = 13
+      else
+        s.state = 5
+      end
+    elseif r == INPUT.B then
       s.state = 5
     end
   elseif st == 5 then
