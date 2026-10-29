@@ -571,6 +571,9 @@ local function weatherMask()
 end
 
 local function drawSingleActor(game, mapDef, a, camX, camY)
+  -- A visible-wild event that lost its painter would otherwise fall through to
+  -- graphics id 0 and draw a second player.  Skip it until it is re-attached.
+  if a.obj and a.obj.wildIcon and not a.draw then return end
   local daytime = daytimeFor(game, mapDef)
   local OwSprites = modOwSprites()
   local useOw = OwSprites and OwSprites.ready and OwSprites.ready()
