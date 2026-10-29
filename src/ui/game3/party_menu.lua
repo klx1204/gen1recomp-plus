@@ -2750,6 +2750,12 @@ function PartyMenu.handleInput(input)
     local fmNames = {}
     local gfm = gameFieldMoves()
     local fmIndex = fieldMoveIndex()
+    local function addFieldMove(mId, label)
+      if label and fmIndex[label] and not fmNames[label] then
+        actions[#actions + 1] = label
+        fmNames[label] = true
+      end
+    end
     if mon and not mon.isEgg and mon.moves then
       for _, m in ipairs(mon.moves) do
         local mId = FieldMoves.normalizeMoveId(m)
@@ -2760,9 +2766,25 @@ function PartyMenu.handleInput(input)
           local mName = mId and FieldMoves.MOVE_NAME_BY_ID[mId]
           label = mName and mName:gsub("_", " ")
         end
-        if label and fmIndex[label] and not fmNames[label] then
-          actions[#actions + 1] = label
-          fmNames[label] = true
+        addFieldMove(mId, label)
+      end
+    end
+    -- A mod can let any healthy Pokemon act as the field user (HMs without
+    -- the move).  Menu-driven HMs (Fly, Dive, Flash, Teleport) would be
+    -- unreachable otherwise, because this list only showed learned moves.
+    if mon and not mon.isEgg and Runtime.wantsHook("fieldmove.eligibility") then
+      -- Use the game's own list: RSE adds Dive, FRLG does not have it.
+      local names = (gfm and gfm.moves) or FIELD_MOVES
+      for _, name in ipairs(names) do
+        local mId = FieldMoves.normalizeMoveId(name)
+        if mId then
+          local user = FieldMoves.partyMoveUser(PartyMenu._party, mId)
+          if rawequal(user, mon) then
+            local label = (gfm and gfm.byMove[mId])
+              or (FieldMoves.MOVE_NAME_BY_ID[mId] and FieldMoves.MOVE_NAME_BY_ID[mId]:gsub("_", " "))
+              or name
+            addFieldMove(mId, label)
+          end
         end
       end
     end
