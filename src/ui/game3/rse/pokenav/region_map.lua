@@ -35,7 +35,10 @@ function NavMap.new(shell)
   local s = RegionMap.newState({
     session = session,
     mode = "wall",
-    canFly = function() return flyMon() ~= nil end,
+    canFly = function()
+      if not FieldMoves.hasBadge({ session = session }, "FLY") then return false end
+      return flyMon() ~= nil
+    end,
     onFly = function(sec, info)
       local mon = flyMon()
       if not mon then return end

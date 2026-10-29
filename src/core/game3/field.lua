@@ -277,6 +277,10 @@ function Field.pendingFlashStep()
   if Message and Message.isOpen and Message.isOpen() then return end
   Field._pendingFlash = nil
   if flashFlagActive() then return end
+  -- Badges gate HMs exactly as in the originals; HMs-without-the-move only
+  -- removes the "someone must know it" half.
+  local FM = lazyReq("src.core.game3.field_moves")
+  if not FM.hasBadge({ session = Field._session }, "FLASH") then return end
   if not flashUserAvailable() then return end
   -- A plain message box: the yes/no widget is drawn under the cave darkness
   -- layer and never becomes visible there.
