@@ -1,0 +1,71 @@
+name: package
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version, e.g. 0.3.97-r1"
+        required: true
+        type: string
+      notes:
+        description: "Extra release notes (optional)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: plus
+          fetch-depth: 0
+
+      - name: Validate version
+        run: |
+          printf '%s' "${{ inputs.version }}" \
+            | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$' \
+            || { echo "bad version: ${{ inputs.version }}"; exit 1; }
+
+      - name: Pack
+        run: |
+          mkdir -p dist
+          scripts/pack_love.sh \
+            --output "dist/gen1recomp-plus-${{ inputs.version }}.love" \
+            --version "${{ inputs.version }}"
+
+      - name: Checksum
+        id: sum
+        run: |
+          sha=$(sha256sum dist/*.love | awk '{print $1}')
+          size=$(stat -c%s dist/*.love)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "size=$size" >> "$GITHUB_OUTPUT"
+          echo "file=$(basename dist/*.love)" >> "$GITHUB_OUTPUT"
+          ls -l dist/
+
+      - name: Draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EXTRA: ${{ inputs.notes }}
+        run: |
+          {
+            echo "gen1recomp-plus ${{ inputs.version }}"
+            echo
+            echo '```text'
+            echo "${{ steps.sum.outputs.file }}"
+            echo "${{ steps.sum.outputs.size }} bytes"
+            echo "sha256: ${{ steps.sum.outputs.sha }}"
+            echo '```'
+            if [ -n "$EXTRA" ]; then
+              echo
+              echo "$EXTRA"
+            fi
+          } > /tmp/notes.md
+          gh release create "v${{ inputs.version }}" dist/*.love \
+            --draft \
+            --title "v${{ inputs.version }}" \
+            --notes-file /tmp/notes.md
