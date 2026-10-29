@@ -2031,7 +2031,33 @@ local function award_catch_exp(catchRes, onDone)
   merge_leveled_set(ExpSeq.leveledSet())
   Battle._onExpDone = function()
     st._catchExpPending = nil
-    if Battle._active and Battle._st == st and onDone then onDone() end
+    if not (Battle._active and Battle._st == st) then return end
+    -- Catch EXP also offers evolutions.  The win path reaches this through
+    -- begin_evo_or_end(); a catch ends with _pendingEnd = "catch", which that
+    -- function rejects, so run the same pending check here.
+    local pending = Evolution.pending(st.playerParty, Battle._leveledUp, st.session)
+    if #pending > 0 then
+      if Battle._headless then
+        for _, entry in ipairs(pending) do
+          Evolution.apply(entry.mon, entry.toSpecies, st.session)
+        end
+        Battle._phase = "ending"
+        if onDone then onDone() end
+        return
+      end
+      local hooks = choice_hooks()
+      hooks.session = st.session
+      hooks.onDone = function()
+        Battle._phase = "ending"
+        if onDone then onDone() end
+      end
+      if EvoSeq.begin(pending, hooks) then
+        Battle._phase = "evolving"
+        return
+      end
+    end
+    Battle._phase = "ending"
+    if onDone then onDone() end
   end
   Battle._phase = "awarding"
   return true

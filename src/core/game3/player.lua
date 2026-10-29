@@ -82,6 +82,7 @@ Player.animDrawn = false
 Player.animInPlace = nil
 Player.animSlow = false
 Player.running = false
+Player.alwaysRun = false
 Player.jumping = false
 Player.surfHopping = false
 Player.dismounting = false
@@ -1559,7 +1560,9 @@ function Player.update(game, input)
     if Player.turnTimer == 0 then setStepAnim() end
     return
   end
-  local wantRun = input and input.isDown and input:isDown("b")
+  -- A mod may hold this true for one-handed play; canDash() still applies.
+  local wantRun = Player.alwaysRun == true
+    or (input and input.isDown and input:isDown("b"))
   local run = Player.biking or (wantRun and Player.canDash())
   Player.tryMove(dir, game, run, input)
 end
