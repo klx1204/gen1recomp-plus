@@ -91,5 +91,6 @@ Changing Pokémon or reopening the summary goes back to the battle stats.
 - upstream: https://github.com/bryanthaboi/gen1recomp
 - branch: `plus`
 - daily `upstream-sync` merges `upstream/dev`
+- release baseline: upstream tag `v0.3.97`, code at `upstream/dev` @ `2aec7650`
 
 See `FORK.md` and `AGENTS.md` for the maintenance rules.
