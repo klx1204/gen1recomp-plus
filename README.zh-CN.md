@@ -89,5 +89,6 @@ love .
 - upstream: https://github.com/bryanthaboi/gen1recomp
 - 分支：`plus`
 - 每日 `upstream-sync` 合并 `upstream/dev`
+- 版本基线：上游 tag `v0.3.97`，代码在 `upstream/dev` @ `2aec7650`
 
 维护规则见 `FORK.md` 和 `AGENTS.md`。
