@@ -220,8 +220,92 @@ function Field.getSession()
   return Field._session
 end
 
+-- Flash prompt: entering a dark cave offers to light it when the party can
+-- use Flash (or a mod frees it).  Runs once the map's enter scripts are done.
+local function flashFlagActive()
+  local Space = package.loaded["src.core.game3.scripting.space"]
+  local Flags = lazyReq("src.core.game3.scripting.flags")
+  local Sem = lazyReq("src.core.game3.field_semantics")
+  local flag = Sem.flag(Field._session, "flashActive")
+  if Space and Space.store and Flags.getFlag then
+    if Flags.getFlag(Space.store, nil, flag) then return true end
+  end
+  local flags = Field._session and Field._session.flags
+  return (flags and flags[flag]) == true
+end
+
+local function flashUserAvailable()
+  local FM = lazyReq("src.core.game3.field_moves")
+  local party = Field._session and Field._session.party
+  if not party then return nil end
+  return FM.partyMoveUser(party, FM.MOVES.FLASH, { game = Field._game, save = Field._session })
+end
+
+function Field.maybeFlashRequest(mapId, def)
+  if not def then return end
+  if (tonumber(def.cave) or 0) == 0 then return end
+  Field._pendingFlash = mapId
+end
+
+local function applyFlash()
+  local Space = package.loaded["src.core.game3.scripting.space"]
+  local Flags = lazyReq("src.core.game3.scripting.flags")
+  local Sem = lazyReq("src.core.game3.field_semantics")
+  local flag = Sem.flag(Field._session, "flashActive")
+  if Space and Space.store and Flags.setFlag then
+    Flags.setFlag(Space.store, nil, flag, true)
+  end
+  local flags = Field._session and Field._session.flags
+  if flags then flags[flag] = true end
+  pcall(function()
+    local Audio = lazyReq("src.core.game3.audio")
+    local SE = lazyReq("src.core.game3.se_ids")
+    if Audio.playSe and SE.SE_M_FLASH then Audio.playSe(SE.SE_M_FLASH) end
+  end)
+  pcall(function() lazyReq("src.core.game3.field_effects").startFlash(function() end) end)
+end
+
+function Field.pendingFlashStep()
+  if not Field._pendingFlash then return end
+  if Field.locked then return end
+  local Space = package.loaded["src.core.game3.scripting.space"]
+  if Space and Space.vm and Space.vm:isRunning() then return end
+  local Choice = package.loaded["src.ui.game3.choice"]
+  if not Choice then return end
+  if Choice.active then return end
+  local Message = package.loaded["src.ui.game3.message"]
+  if Message and Message.isOpen and Message.isOpen() then return end
+  Field._pendingFlash = nil
+  if flashFlagActive() then return end
+  if not flashUserAvailable() then return end
+  -- A plain message box: the yes/no widget is drawn under the cave darkness
+  -- layer and never becomes visible there.
+  local Message = package.loaded["src.ui.game3.message"]
+  local ok = pcall(function()
+    local Hud = require("src.ui.game3.hud")
+    if Hud.ensure then Hud.ensure(Field._game, "message") end
+    Message.show("No light here. Use FLASH?\nA: yes    B: no")
+  end)
+  if ok then
+    Field._flashPrompt = true
+    Field.locked = true
+  else
+    Field._pendingFlash = nil
+  end
+end
+
+function Field.answerFlash(yes)
+  if not Field._flashPrompt then return end
+  Field._flashPrompt = nil
+  Field.locked = false
+  local Message = package.loaded["src.ui.game3.message"]
+  if Message and Message.close then pcall(Message.close) end
+  if yes then applyFlash() end
+end
+
 function Field.update(_dt)
   if not Field.running then return end
+  pcall(Field.pendingFlashStep)
   local game = Field._game
   pollRuntimeTalk()
 

@@ -253,6 +253,17 @@ function Hud.update(game, _dt, inputTop)
   -- Do not replay naming input or leak its closing press to the menu underneath.
   if namingTick then return end
 
+  -- Flash prompt in the field: A accepts, B declines, everything else waits.
+  do
+    local FieldMod = package.loaded["src.core.game3.field"]
+    if not inBattle and FieldMod and FieldMod._flashPrompt then
+      if input:wasPressed("a") then FieldMod.answerFlash(true)
+      elseif input:wasPressed("b") then FieldMod.answerFlash(false) end
+      return
+    end
+  end
+
+
   -- Active stack modal menu input takes top precedence.
   -- When battle is active, overlays like EvolutionScene or modal stack menus still receive input.
   if Stack.busy() then

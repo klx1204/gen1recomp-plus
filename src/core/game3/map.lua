@@ -786,6 +786,11 @@ function Map.load(mod, game, mapId, opts)
     })
   end
   -- pokefirered/src/overworld.c:1717
+  -- Dark caves ask about Flash once the map is loaded and its scripts are done.
+  pcall(function()
+    local Field = package.loaded["src.core.game3.field"]
+    if Field and Field.maybeFlashRequest then Field.maybeFlashRequest(mapId, def) end
+  end)
   local enterVia = opts.enterVia or Map._nextEnterVia
   Map._nextEnterVia = nil
   if Space and Space.runEnterScripts then

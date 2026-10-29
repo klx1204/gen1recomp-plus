@@ -1479,6 +1479,9 @@ function FieldView.setCameraPanning(x, y)
 end
 
 local function flashActive()
+  -- While the Flash prompt is open the cave must be readable.
+  local Choice = package.loaded["src.ui.game3.choice"]
+  if Choice and Choice.active then return true end
   local Runtime = package.loaded["src.core.game3.runtime"]
   local session = Runtime and Runtime.getSession and Runtime.getSession()
   local flashFlag = Sem.flag(session, "flashActive")
