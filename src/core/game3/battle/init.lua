@@ -2031,33 +2031,9 @@ local function award_catch_exp(catchRes, onDone)
   merge_leveled_set(ExpSeq.leveledSet())
   Battle._onExpDone = function()
     st._catchExpPending = nil
-    if not (Battle._active and Battle._st == st) then return end
-    -- Catch EXP also offers evolutions.  The win path reaches this through
-    -- begin_evo_or_end(); a catch ends with _pendingEnd = "catch", which that
-    -- function rejects, so run the same pending check here.
-    local pending = Evolution.pending(st.playerParty, Battle._leveledUp, st.session)
-    if #pending > 0 then
-      if Battle._headless then
-        for _, entry in ipairs(pending) do
-          Evolution.apply(entry.mon, entry.toSpecies, st.session)
-        end
-        Battle._phase = "ending"
-        if onDone then onDone() end
-        return
-      end
-      local hooks = choice_hooks()
-      hooks.session = st.session
-      hooks.onDone = function()
-        Battle._phase = "ending"
-        if onDone then onDone() end
-      end
-      if EvoSeq.begin(pending, hooks) then
-        Battle._phase = "evolving"
-        return
-      end
-    end
-    Battle._phase = "ending"
-    if onDone then onDone() end
+    -- Continue the catch flow (Dex scene, nickname, storage); the evolution
+    -- check runs at the end of it, as in the originals.
+    if Battle._active and Battle._st == st and onDone then onDone() end
   end
   Battle._phase = "awarding"
   return true
@@ -3731,6 +3707,35 @@ local function capture_rs_caught(catchRes)
   catchRes._rsCaptured = true
 end
 
+-- Called once the catch flow (Dex, nickname, storage) is done: catch EXP can
+-- level a Pokemon, and the evolution offer belongs after the Pokedex entry.
+local function begin_catch_evo_or_end()
+  local st = Battle._st
+  local session = st and st.session
+  local pending = {}
+  if st then
+    pending = Evolution.pending(st.playerParty, Battle._leveledUp, session)
+  end
+  if #pending == 0 then
+    Battle._phase = "ending"
+    return
+  end
+  if Battle._headless then
+    for _, entry in ipairs(pending) do
+      Evolution.apply(entry.mon, entry.toSpecies, session)
+    end
+    Battle._phase = "ending"
+    return
+  end
+  local hooks = choice_hooks()
+  hooks.session = session
+  if EvoSeq.begin(pending, hooks) then
+    Battle._phase = "evolving"
+  else
+    Battle._phase = "ending"
+  end
+end
+
 local function finish_catch_flow(catchRes, ename, nicknamed)
   if catchRes and catchRes.location == "pc" then
     local Runtime = package.loaded["src.core.game3.runtime"]
@@ -3750,7 +3755,7 @@ local function finish_catch_flow(catchRes, ename, nicknamed)
   Ui.clearCaughtDexScene()
   Battle._actions = {}
   Battle._pendingEnd = "catch"
-  Battle._phase = "ending"
+  begin_catch_evo_or_end()
 end
 
 local function start_post_catch_flow(catchRes)
@@ -3768,7 +3773,7 @@ local function start_post_catch_flow(catchRes)
     capture_rs_caught(catchRes)
     Battle._actions = {}
     Battle._pendingEnd = "catch"
-    Battle._phase = "ending"
+    begin_catch_evo_or_end()
     return
   end
 
@@ -4274,7 +4279,7 @@ update_body = function(dt, game)
     if not Ui.pump() then return end
     Battle._actions = {}
     Battle._pendingEnd = "catch"
-    Battle._phase = "ending"
+    begin_catch_evo_or_end()
     return
   end
 
