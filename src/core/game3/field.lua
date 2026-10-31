@@ -1144,6 +1144,14 @@ function Field.interact(game)
   local FieldMoves = lazyReq("src.core.game3.field_moves")
   local party = Field._session and Field._session.party
 
+  -- A mod follower (src.world.game3.Follower) has no event object of its own,
+  -- so the A button never reaches it through Objects.at.  The module decides
+  -- whether it is in front and whether it says something.
+  local Follower = package.loaded["src.world.game3.Follower"]
+  if Follower and Follower.at and Follower.at(nil, fx, fy) then
+    if Follower.talk and Follower.talk() then return true end
+  end
+
   -- pokeemerald/src/overworld.c:2372
   local LinkPlayers = package.loaded["src.core.game3.link.link_players"]
   if LinkPlayers and LinkPlayers.tryInteract(fx, fy) then return true end
