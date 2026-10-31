@@ -506,10 +506,13 @@ function UnifiedWorld.new(gameProvider, generation, version, modId, engineRequir
         end
       end
       if not onDone and not custom then return api:startWildBattle(species, level) end
-      ok, err = g3("battle_bridge").startWild(nil, game, mon, {
-        done = onDone,
-        songAtStart = type(extra) == "table" and extra.songAtStart or nil,
-      })
+      local wildOpts = { done = onDone }
+      if type(extra) == "table" then
+        -- `x and y or nil` loses a false value, so copy these by hand.
+        if extra.songAtStart ~= nil then wildOpts.songAtStart = extra.songAtStart end
+        if extra.fade ~= nil then wildOpts.fade = extra.fade end
+      end
+      ok, err = g3("battle_bridge").startWild(nil, game, mon, wildOpts)
       if not ok then return nil, err or "battle failed" end
       return true
     end
