@@ -511,6 +511,7 @@ function UnifiedWorld.new(gameProvider, generation, version, modId, engineRequir
         -- `x and y or nil` loses a false value, so copy these by hand.
         if extra.songAtStart ~= nil then wildOpts.songAtStart = extra.songAtStart end
         if extra.fade ~= nil then wildOpts.fade = extra.fade end
+        if extra.roamer ~= nil then wildOpts.roamer = extra.roamer end
       end
       ok, err = g3("battle_bridge").startWild(nil, game, mon, wildOpts)
       if not ok then return nil, err or "battle failed" end
