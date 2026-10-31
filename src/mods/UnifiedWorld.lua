@@ -506,7 +506,10 @@ function UnifiedWorld.new(gameProvider, generation, version, modId, engineRequir
         end
       end
       if not onDone and not custom then return api:startWildBattle(species, level) end
-      ok, err = g3("battle_bridge").startWild(nil, game, mon, { done = onDone })
+      ok, err = g3("battle_bridge").startWild(nil, game, mon, {
+        done = onDone,
+        songAtStart = type(extra) == "table" and extra.songAtStart or nil,
+      })
       if not ok then return nil, err or "battle failed" end
       return true
     end

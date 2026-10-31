@@ -697,8 +697,10 @@ local function start_battle(mod, game, foe, opts, lifecycle)
   startOpts.song = battleSong
 
   -- pret CreateBattleStartTask: PlayMapChosenOrBattleBGM starts immediately
-  -- on frame 1 of the battle transition on the overworld.
-  if not opts.headless and battleSong then
+  -- on frame 1 of the battle transition on the overworld.  opts.songAtStart
+  -- holds the song back until Battle.start draws the battle instead, for
+  -- callers whose transition still shows the field for a while.
+  if not opts.headless and battleSong and not opts.songAtStart then
     local okA, Audio = pcall(require, "src.core.game3.audio")
     if okA and Audio and Audio.playSong then
       Audio.playSong(battleSong)
