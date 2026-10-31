@@ -695,11 +695,6 @@ local function start_battle(mod, game, foe, opts, lifecycle)
 
   local battleSong = resolve_battle_song(opts, startOpts)
   startOpts.song = battleSong
-  -- Wild battles hold the song until the battle draws.  Starting it on the
-  -- first transition frame leaves it playing over a still field, and the
-  -- second playSong when the battle appears cut the stream.  Trainer battles
-  -- keep the ROM timing.
-  if opts.wild and opts.songAtStart == nil then opts.songAtStart = true end
 
   -- pret CreateBattleStartTask: PlayMapChosenOrBattleBGM starts immediately
   -- on frame 1 of the battle transition on the overworld.  opts.songAtStart
