@@ -472,7 +472,14 @@ function UnifiedWorld.new(gameProvider, generation, version, modId, engineRequir
     return nil, "no healthy party"
   end
 
-  local function wild(game, api, species, level, onDone)
+  local function wild(game, api, species, level, onDone, extra)
+    -- startWildBattle(species, level, opts): a visible wild encounter already
+    -- rolled its personality and gender when it spawned, and the battle has to
+    -- use them or the same Pokemon comes back with a different nature,
+    -- gender and shiny bit.
+    if type(onDone) == "table" and extra == nil then
+      extra, onDone = onDone, onDone.onDone
+    end
     local ok, err, nativeSpecies = wildArgs(game, species, level, onDone)
     if not ok then return nil, err end
     species = nativeSpecies
@@ -490,10 +497,16 @@ function UnifiedWorld.new(gameProvider, generation, version, modId, engineRequir
       end
     end
     if generation == 3 then
-      if not onDone then return api:startWildBattle(species, level) end
-      ok, err = g3("battle_bridge").startWild(nil, game,
-        { species = req("src.mods.Gen3Compat").speciesId(species), level = level },
-        { done = onDone })
+      local encounters = req("src.mods.Gen3Compat")
+      local mon = { species = encounters.speciesId(species), level = level }
+      local custom = false
+      if type(extra) == "table" then
+        for _, key in ipairs({ "personality", "gender", "ivs", "heldItem", "moves" }) do
+          if extra[key] ~= nil then mon[key] = extra[key]; custom = true end
+        end
+      end
+      if not onDone and not custom then return api:startWildBattle(species, level) end
+      ok, err = g3("battle_bridge").startWild(nil, game, mon, { done = onDone })
       if not ok then return nil, err or "battle failed" end
       return true
     end
