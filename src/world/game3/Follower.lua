@@ -20,6 +20,10 @@ function Follower.reset()
   npc, lastMap, trailX, trailY = nil, nil, nil, nil
 end
 
+--- Hide the companion regardless of the mod's own rule (a script or another
+--- mod's switch, the equivalent of pret's flag).
+function Follower.setHidden(on) Follower.forcedHidden = on and true or false end
+
 function Follower.current() return npc end
 function Follower.talk() return false end
 function Follower.starterInParty() return nil end
@@ -33,14 +37,29 @@ function Follower.update(game)
   local player = lazyReq("src.core.game3.player")
   local session = Field.getSession()
   local world = { player = player, map = { id = session and session.map } }
-  if not Field.running or not session
+  if not Field.running or not session or Follower.forcedHidden
       or not ModRuntime.call("world.follower.spawn", shouldSpawn, game, world) then
     Follower.reset()
     return
   end
   local teleported = trailX and (math.abs(player.cellX - trailX) + math.abs(player.cellY - trailY) > 6)
   if not npc or lastMap ~= session.map or teleported then
-    npc = { cellX = player.cellX, cellY = player.cellY, px = player.px, py = player.py,
+    -- Appear on the tile behind the player (the door the player came out of),
+    -- not on top of them: HGSS / pret move the follower out of the doorway.
+    local bx, by = player.cellX, player.cellY
+    local BEHIND = { down = { 0, -1 }, up = { 0, 1 }, left = { 1, 0 }, right = { -1, 0 } }
+    local d = BEHIND[player.facing or "down"]
+    if d then
+      local Collision = package.loaded["src.core.game3.collision"]
+        or lazyReq("src.core.game3.collision")
+      if Collision and Collision.canEnter
+          and Collision.canEnter(game, player.cellX + d[1], player.cellY + d[2],
+            { fromX = player.cellX, fromY = player.cellY,
+              dir = player.facing or "down", elevation = player.elevation }) then
+        bx, by = player.cellX + d[1], player.cellY + d[2]
+      end
+    end
+    npc = { cellX = bx, cellY = by, px = bx * 16, py = by * 16,
       facing = player.facing, passable = true, pikachuFollower = true, moving = false }
     lastMap, trailX, trailY = session.map, player.cellX, player.cellY
   end
