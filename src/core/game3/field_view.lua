@@ -16,6 +16,10 @@ FieldView._tilesPerRow = 16
 FieldView._blockTiles = nil
 FieldView._tilePalettes = nil -- [tileId+1] = BG slot 1..8
 FieldView._spriteCache = {} -- key → SpriteRenderer
+-- Actors may be added to the field for position only (kind + x/y and no art).
+-- A mod that appends those sets noDraw = true; the capability flag says this
+-- engine honours it instead of falling back to the 8x12 placeholder rectangle.
+FieldView.POSITION_ONLY_ACTORS = true
 FieldView._logged = false
 FieldView._loggedPal = false
 FieldView._nativeBatch = nil
@@ -574,6 +578,9 @@ local function drawSingleActor(game, mapDef, a, camX, camY)
   -- A visible-wild event that lost its painter would otherwise fall through to
   -- graphics id 0 and draw a second player.  Skip it until it is re-attached.
   if a.obj and a.obj.wildIcon and not a.draw then return end
+  -- Position-only actors exist to tell another mod where something is (the
+  -- footprints layer reads them); they have no art of their own.
+  if a.noDraw then return end
   local daytime = daytimeFor(game, mapDef)
   local OwSprites = modOwSprites()
   local useOw = OwSprites and OwSprites.ready and OwSprites.ready()
