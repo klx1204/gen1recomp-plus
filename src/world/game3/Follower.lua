@@ -46,7 +46,24 @@ function Follower.update(game)
   end
   local tx = player.moving and player.targetX or player.cellX
   local ty = player.moving and player.targetY or player.cellY
-  if tx ~= trailX or ty ~= trailY then
+  -- A ledge jump lands two cells away.  If the companion is right behind the
+  -- player it jumps the same ledge at the same time (pret
+  -- MOVEMENT_ACTION_JUMP_2_*), instead of skipping the cell and walking
+  -- through the ledge later.
+  local jumped = false
+  if player.jumping and player.moving and not npc.moving then
+    local jx, jy = tx - player.cellX, ty - player.cellY
+    if math.abs(jx) + math.abs(jy) >= 2 then
+      local sx = jx > 0 and 1 or (jx < 0 and -1 or 0)
+      local sy = jy > 0 and 1 or (jy < 0 and -1 or 0)
+      if npc.cellX == player.cellX - sx and npc.cellY == player.cellY - sy then
+        npc.goalX, npc.goalY = npc.cellX + sx * 2, npc.cellY + sy * 2
+        trailX, trailY = tx, ty
+        jumped = true
+      end
+    end
+  end
+  if not jumped and (tx ~= trailX or ty ~= trailY) then
     npc.goalX, npc.goalY = trailX, trailY
     trailX, trailY = tx, ty
   end
