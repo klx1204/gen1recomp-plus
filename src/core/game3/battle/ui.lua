@@ -1945,6 +1945,8 @@ local function draw_menu_text(text, x, y, opts)
   FrlgFont.draw(tostring(text or ""), x, y, {
     small = opts.small ~= nil and opts.small or false,
     colors = opts.colors or FrlgFont.COLOR.NORMAL,
+    maxWidth = opts.maxWidth,
+    ellipsis = opts.ellipsis,
   })
 end
 
@@ -2639,7 +2641,8 @@ local function draw_move_menu_rs(st)
     if Ui._swap and i == Ui._moveIndex then
       labelColors = rs_swap_highlight(colors)
     end
-    F.draw(label, 8 + 80 * ((i - 1) % 2), 120 + 16 * math.floor((i - 1) / 2), { colors = labelColors })
+    F.draw(label, 8 + 80 * ((i - 1) % 2), 120 + 16 * math.floor((i - 1) / 2), {
+      colors = labelColors, maxWidth = 76, ellipsis = true })
   end
   if Ui._swap then
     F.draw(RomText.plain("gText_BattleSwitchWhich"), 184, 120, { colors = colors })
@@ -2767,7 +2770,8 @@ local function draw_move_menu(st)
         colors = menuMoveColors(def, targetTypes, colors)
       end
     end
-    draw_menu_text(label, positions[i][1], positions[i][2], { small = true, colors = colors })
+    draw_menu_text(label, positions[i][1], positions[i][2], {
+      small = true, colors = colors, maxWidth = 70, ellipsis = true })
   end
   if Ui._swap then
     draw_menu_text(RomText.plain("gText_BattleSwitchWhich"), 168, 122,

@@ -1282,44 +1282,212 @@ end
 
 local restore_ext = TextIR.restoreExt
 
+-- Chinese prose has no spaces, so a word-only splitter leaves a whole
+-- paragraph on one line.  breakLine splits one logical line into display
+-- lines that fit `maxWidth`, breaking between CJK characters and between
+-- Latin words, and never starting a line with closing punctuation.
+local CLOSING = {
+  ["，"] = true, ["。"] = true, ["、"] = true, ["；"] = true, ["："] = true,
+  ["？"] = true, ["！"] = true, ["）"] = true, ["」"] = true, ["』"] = true,
+  ["】"] = true, ["〉"] = true, ["》"] = true, ["…"] = true, ["～"] = true,
+  [","] = true, ["."] = true, [";"] = true, [":"] = true, ["?"] = true,
+  ["!"] = true, [")"] = true, ["]"] = true, ["}"] = true, ["%"] = true,
+}
+
+-- One display unit: a CJK character, an ASCII run (a word), a {TAG}, an
+-- escape pair, or a protected ext placeholder.  Spaces are separate units.
+local function line_units(s)
+  local out, i, n = {}, 1, #s
+  while i <= n do
+    local b = s:byte(i)
+    if b == 0xFF then
+      local j = s:find("\254", i, true)
+      if j then
+        out[#out + 1] = s:sub(i, j)
+        i = j + 1
+      else
+        out[#out + 1] = s:sub(i)
+        break
+      end
+    elseif b == 0x7B then -- {
+      local j = s:find("}", i, true)
+      if j then
+        out[#out + 1] = s:sub(i, j)
+        i = j + 1
+      else
+        out[#out + 1] = s:sub(i, i)
+        i = i + 1
+      end
+    elseif b == 0x5C then -- \
+      out[#out + 1] = s:sub(i, math.min(i + 1, n))
+      i = i + 2
+    elseif b == 0x20 then
+      out[#out + 1] = { space = true }
+      i = i + 1
+    elseif b < 0x80 then
+      local j = i
+      while j <= n do
+        local c = s:byte(j)
+        if c >= 0x80 or c == 0x20 or c == 0x7B or c == 0x5C or c == 0xFF then break end
+        j = j + 1
+      end
+      if j == i then
+        -- A stray brace or backslash that opened no token: take it alone
+        -- rather than yielding an empty unit and looping forever.
+        out[#out + 1] = s:sub(i, i)
+        i = i + 1
+      else
+        out[#out + 1] = s:sub(i, j - 1)
+        i = j
+      end
+    else
+      local len = b >= 0xF0 and 4 or (b >= 0xE0 and 3 or 2)
+      out[#out + 1] = s:sub(i, math.min(i + len - 1, n))
+      i = i + len
+    end
+  end
+  return out
+end
+
+--- Split one protected line into lines that fit `maxWidth` pixels.
+-- Returns protected strings; the caller restores ext placeholders.
+function FrlgFont.breakLine(lineStr, maxWidth, opts)
+  if not lineStr or lineStr == "" then return { "" } end
+  maxWidth = maxWidth or 200
+  local units = line_units(lineStr)
+  local out, cur = {}, {}
+  local curW, spaceW = 0, FrlgFont.measure(" ", opts)
+  local function width(unit)
+    if type(unit) == "table" then return 0 end
+    return FrlgFont.measure(restore_ext(unit), opts)
+  end
+  local function flush()
+    out[#out + 1] = table.concat(cur)
+    cur, curW = {}, 0
+  end
+  local function splitWord(word)
+    for c in word:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
+      local cw = FrlgFont.measure(restore_ext(c), opts)
+      if #cur > 0 and curW + cw > maxWidth then flush() end
+      cur[#cur + 1] = c
+      curW = curW + cw
+    end
+  end
+  local pendingSpace = false
+  for idx, unit in ipairs(units) do
+    if type(unit) == "table" and unit.space then
+      if #cur > 0 then pendingSpace = true end
+    else
+      local w = width(unit)
+      local add = pendingSpace and (spaceW + w) or w
+      if #cur == 0 and type(unit) ~= "table" and w > maxWidth then
+        -- A single Latin word wider than the box: break it by character.
+        splitWord(unit)
+        pendingSpace = false
+      elseif #cur == 0 or curW + add <= maxWidth then
+        if pendingSpace and #cur > 0 then cur[#cur + 1] = " " end
+        cur[#cur + 1] = unit
+        curW = curW + add
+        pendingSpace = false
+      elseif CLOSING[unit] and #unit <= 3 then
+        -- Keep a closing mark with the character before it; a line that
+        -- starts with "。" or "，" reads as a layout bug.  Move that
+        -- character down instead of hanging the mark past the margin.
+        if #cur > 1 then
+          local last = table.remove(cur)
+          local lastW = width(last)
+          flush()
+          cur[#cur + 1] = last
+          curW = lastW
+        else
+          flush()
+        end
+        cur[#cur + 1] = unit
+        curW = curW + w
+        pendingSpace = false
+      else
+        flush()
+        if type(unit) ~= "table" and w > maxWidth then
+          splitWord(unit)
+        else
+          cur[#cur + 1] = unit
+          curW = w
+        end
+        pendingSpace = false
+      end
+    end
+  end
+  if #cur > 0 then flush() end
+  if #out == 0 then out[1] = "" end
+  return out
+end
+
+--- Cut `text` to fit maxWidth, ending in an ellipsis when it does not fit.
+-- Used by fixed-width lists (move list, bag, party, dex) where a wrapped
+-- second line has nowhere to go.  Tags and ext placeholders stay attached to
+-- their neighbours.
+function FrlgFont.ellipsize(text, maxWidth, opts)
+  text = tostring(text or "")
+  if text == "" or not maxWidth then return text end
+  maxWidth = tonumber(maxWidth) or 0
+  if FrlgFont.measure(text, opts) <= maxWidth then return text end
+  local suffix = "…"
+  local suffixW = FrlgFont.measure(suffix, opts)
+  local out = {}
+  local w = 0
+  local lastSpace
+  for _, unit in ipairs(line_units(text)) do
+    local uw
+    if type(unit) == "table" then
+      unit = " "
+      uw = FrlgFont.measure(" ", opts)
+    else
+      uw = FrlgFont.measure(restore_ext(unit), opts)
+    end
+    if w + uw + suffixW > maxWidth then
+      -- Prefer cutting at the last word boundary, but only for a Latin
+      -- remainder: Chinese has no spaces, so cutting back there would throw
+      -- away a whole phrase.
+      local latinTail = lastSpace and out[lastSpace + 1]
+        and out[lastSpace + 1]:byte(1) and out[lastSpace + 1]:byte(1) < 0x80
+      if latinTail and #out > lastSpace then
+        for i = #out, lastSpace + 1, -1 do out[i] = nil end
+      end
+      break
+    end
+    out[#out + 1] = unit
+    if unit == " " then lastSpace = #out end
+    w = w + uw
+  end
+  if #out == 0 then
+    -- A single unbreakable unit (a long Latin word) wider than the box:
+    -- cut it by character so the list still shows a useful prefix.
+    local acc, used = {}, 0
+    for ch in tostring(text):gmatch("[%z\1-\127\194-\244][\128-\191]*") do
+      local cw = FrlgFont.measure(restore_ext(ch), opts)
+      if used + cw + suffixW > maxWidth then break end
+      acc[#acc + 1] = ch
+      used = used + cw
+    end
+    out = acc
+  end
+  local trimmed = table.concat(out):gsub("%s+$", "")
+  return trimmed .. suffix
+end
+
 --- Word-wrap text to fit within maxWidth pixels.
 function FrlgFont.wrap(text, maxWidth, opts)
   opts = opts or {}
   maxWidth = maxWidth or 200
-  local spaceW = FrlgFont.measure(" ", opts)
   local outLines = {}
-  local rawLines = {}
   local clean = TextIR.protectExt(text):gsub("\\n", "\n"):gsub("\\p", "\n"):gsub("\\l", "\n")
   for line in (clean .. "\n"):gmatch("(.-)\r?\n") do
-    rawLines[#rawLines + 1] = line
-  end
-  for _, rawLine in ipairs(rawLines) do
-    local words = {}
-    for word in rawLine:gmatch("%S+") do
-      words[#words + 1] = word
-    end
-    if #words == 0 then
-      outLines[#outLines + 1] = ""
-    else
-      local curLine = words[1]
-      local curW = FrlgFont.measure(restore_ext(curLine), opts)
-      for i = 2, #words do
-        local w = words[i]
-        local wW = FrlgFont.measure(restore_ext(w), opts)
-        if curW + spaceW + wW <= maxWidth then
-          curLine = curLine .. " " .. w
-          curW = curW + spaceW + wW
-        else
-          outLines[#outLines + 1] = curLine
-          curLine = w
-          curW = wW
-        end
-      end
-      outLines[#outLines + 1] = curLine
-    end
+    local broken = FrlgFont.breakLine(line, maxWidth, opts)
+    for _, piece in ipairs(broken) do outLines[#outLines + 1] = piece end
   end
   return restore_ext(table.concat(outLines, "\n"))
 end
+
 
 local ADVANCE_SMALL = { small = true }
 local ADVANCE_NORMAL = {}
@@ -1395,6 +1563,14 @@ function FrlgFont.draw(text, x, y, opts)
 
   local maxW = opts.maxWidth or 240
   local limit = opts.limitChars
+  -- Descriptions and other prose have no hard line breaks in Chinese; wrap
+  -- them to the panel instead of letting draw clip the tail.
+  if opts.wrap and opts.maxWidth then
+    text = FrlgFont.wrap(text, opts.maxWidth, opts)
+  end
+  if opts.ellipsis and opts.maxWidth and not limit then
+    text = FrlgFont.ellipsize(text, opts.maxWidth, opts)
+  end
   local ls = opts.letterSpacing or 0
   local minW, jpn = 0, false
   local penX, penY = 0, 0

@@ -559,6 +559,7 @@ local function party_print(text, px, py, maxW, winPal)
     maxWidth = maxW or 56,
     colors = PartyChrome.textColors(winPal),
     small = true,
+    ellipsis = true,
   })
 end
 

@@ -1499,7 +1499,7 @@ function BagMenu.draw()
         local num = ItemsData.toNumericId(r.id)
         local colors = (num == ItemsData.ITEM_TM_CASE or num == ItemsData.ITEM_BERRY_POUCH)
           and ITEM_BLUE or FrlgFont.COLOR.NORMAL
-        FrlgFont.draw(label, 97, y, { maxWidth = 96, colors = colors })
+        FrlgFont.draw(label, 97, y, { maxWidth = 96, colors = colors, ellipsis = true })
         local info = r.info or ItemsData.info(r.id)
         local important = info and (tonumber(info.importance) or 0) ~= 0
         if pocket ~= "KEY_ITEMS" and pocket ~= "TM_CASE" and not important then
@@ -1563,7 +1563,7 @@ function BagMenu.draw()
     end
     if desc then
       -- src/item_menu.c:756 (window 1 at (5, 14), x=0, y=3, maxWidth=200, linePitch=14)
-      FrlgFont.draw(desc, 40, 115, { colors = WIN_WHITE, maxWidth = 200, linePitch = 14 })
+      FrlgFont.draw(desc, 40, 115, { colors = WIN_WHITE, maxWidth = 200, linePitch = 14, wrap = true })
     end
   end
 

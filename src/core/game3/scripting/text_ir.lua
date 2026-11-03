@@ -750,6 +750,7 @@ local function wrap_subline(lineStr, maxW)
   maxW = maxW or 208
   local okF, FrlgFont = pcall(require, "src.ui.game3.frlg_font")
   if okF and FrlgFont and FrlgFont.measure then
+    if FrlgFont.breakLine then return FrlgFont.breakLine(lineStr, maxW) end
     local function measure(str) return FrlgFont.measure(TextIR.restoreExt(str)) end
     local curW = measure(lineStr)
     if curW <= maxW then

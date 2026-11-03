@@ -192,8 +192,14 @@ function FontMods.ttfEligible(ch, small)
   local cp = decodeAt(ch, 1)
   if cp == nil then return false end
   -- A CJK font only takes over CJK codepoints; ASCII keeps the ROM atlas so
-  -- the rest of the UI stays pixel-perfect.
-  if ttf.cjk then return cp >= 0x2E80 and cp <= 0x9FFF end
+  -- the rest of the UI stays pixel-perfect.  Chinese prose also uses U+2000
+  -- punctuation (... -- ' ' " ") and fullwidth forms (！，？：；（）), which are
+  -- outside the ideograph block but have glyphs in the same font.
+  if ttf.cjk then
+    return (cp >= 0x2E80 and cp <= 0x9FFF)
+      or (cp >= 0x2000 and cp <= 0x206F)
+      or (cp >= 0xFF00 and cp <= 0xFFEF)
+  end
   return (cp >= 0x20 and cp <= 0x7E) or (cp >= 0xC0 and cp <= 0x24F)
 end
 
