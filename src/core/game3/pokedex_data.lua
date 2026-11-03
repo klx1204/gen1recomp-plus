@@ -207,7 +207,10 @@ function PokedexData.getEntry(speciesId)
   local wholeLbs = math.floor(lbsHund / 100)
   local fracLbs = math.floor((lbsHund % 100) / 10)
   -- src/pokedex_screen.c:2846
-  local weightFormatted = string.format("%4d.%d ", wholeLbs, fracLbs) .. RomText.plain("gText_Lbs")
+  -- Emerald's cache has no gText_Lbs (that is a FireRed label); opening the
+  -- data page used to raise "ROM text gText_Lbs is not in the script cache".
+  local lbs = RomText.has("gText_Lbs") and RomText.plain("gText_Lbs") or "lbs"
+  local weightFormatted = string.format("%4d.%d ", wholeLbs, fracLbs) .. lbs
 
   local cat = raw.category
   -- src/pokedex_screen.c:2703
