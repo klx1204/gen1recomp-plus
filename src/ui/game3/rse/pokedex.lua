@@ -990,9 +990,16 @@ local function monInfo(s, nat, nationalNumber, owned, newEntry)
     out[#out + 1] = { text = RomText.plain("gText_UnkWeight"), x = 0x81, y = 0x49 }
   end
   local desc = owned and Strings(e.description or "") or ""
-  local w = 0
-  for line in (desc .. "\n"):gmatch("(.-)\n") do w = math.max(w, FrlgFont.measure(line) or 0) end
-  out[#out + 1] = { text = desc, x = w < 240 and math.floor((240 - w) / 2) or 0, y = 95 }
+  if desc ~= "" and not desc:find("\n", 1, true) then
+    -- Chinese flavor text arrives as one long line; wrap it into the four
+    -- lines the flavor window holds instead of running off the right edge.
+    local wrapped = FrlgFont.wrapClamp(desc, 228, 4)
+    out[#out + 1] = { text = wrapped, x = 6, y = 95 }
+  else
+    local w = 0
+    for line in (desc .. "\n"):gmatch("(.-)\n") do w = math.max(w, FrlgFont.measure(line) or 0) end
+    out[#out + 1] = { text = desc, x = w < 240 and math.floor((240 - w) / 2) or 0, y = 95 }
+  end
   return out
 end
 Pokedex.monInfo = monInfo
