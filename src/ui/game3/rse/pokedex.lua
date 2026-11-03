@@ -1449,10 +1449,22 @@ function tasks.loadCry(s)
   elseif st == 4 then
     local nat = item(s, s.selected).dexNum
     local sp = Pokedex.speciesOf(nat)
-    s.cryText = {
-      { text = dexText("gText_CryOf"), x = nativeRs() and 80 or 82, y = nativeRs() and 32 or 33 },
-      { text = sp ~= 0 and pokemon().name(sp) or "-----", x = 82, y = nativeRs() and 48 or 49 },
-    }
+    local name = sp ~= 0 and pokemon().name(sp) or "-----"
+    local cryOf = dexText("gText_CryOf")
+    if cryOf:find("[\228-\233]") then
+      -- The Chinese label is a suffix ("的叫声"), while the English layout is
+      -- a prefix above the name.  Swap the two lines so it reads
+      -- "喷火龙 / 的叫声" inside the narrow column.
+      s.cryText = {
+        { text = name, x = 82, y = 33 },
+        { text = cryOf, x = 82, y = 49 },
+      }
+    else
+      s.cryText = {
+        { text = cryOf, x = nativeRs() and 80 or 82, y = nativeRs() and 32 or 33 },
+        { text = name, x = 82, y = nativeRs() and 48 or 49 },
+      }
+    end
     s.state = 5
   elseif st == 5 then
     local nat = item(s, s.selected).dexNum
@@ -1575,9 +1587,24 @@ function tasks.loadSize(s)
     s.bg[1] = selectBar(s, true, nativeRs() and 3 or 2)
     s.state = 3
   elseif st == 3 then
-    local name = s.session and (s.session.name or s.session.playerName) or ""
-    local label = dexText("gText_SizeComparedTo")
-    local t = label:find("^の") and tostring(name) .. label or label .. tostring(name)
+    local name = tostring(s.session and (s.session.name or s.session.playerName) or "")
+    local sp = Pokedex.speciesOf(item(s, s.selected).dexNum)
+    local monName = sp ~= 0 and pokemon().name(sp) or "-----"
+    -- The English label is a prefix ("SIZE COMPARED TO "); the Chinese one
+    -- is a full sentence with two {STR_VAR_n}.  Fill those instead of
+    -- appending the player name to a sentence that already has slots.
+    local translated = RomText.translate(RomText.ir("gText_SizeComparedTo"), {}, "gText_SizeComparedTo")
+    local hasVars = false
+    for _, seg in ipairs(translated) do
+      if seg.t == "strvar" then hasVars = true break end
+    end
+    local t
+    if hasVars then
+      t = RomText.plain("gText_SizeComparedTo", { stringVars = { monName, name } })
+    else
+      local label = dexText("gText_SizeComparedTo")
+      t = label:find("^の") and name .. label or label .. name
+    end
     local w = FrlgFont.measure(t) or 0
     s.sizeText = { text = t, x = nativeRs() and (24 + 96 - math.floor(w / 2)) or (w < 240 and math.floor((240 - w) / 2) or 0), y = nativeRs() and 120 or 121 }
     s.state = 4
