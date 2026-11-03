@@ -63,6 +63,42 @@ local function width(text, ctx)
   return PalText.width(text, ctx)
 end
 
+-- A text that does not fit its one-line window scrolls back and forth.
+-- Speed follows the normal text-speed setting: one 10 px glyph per
+-- SPEED_DELAYS frame(s), so it reads at the same pace as the printer.
+local MARQUEE_PAUSE = 30
+local SPEED_DELAYS = { [0] = 8, [1] = 4, [2] = 1 }
+
+local function marqueePut(m, w, text, x, y, colorId, tick, pxPerFrame, ctx)
+  if not w then return end
+  ctx = ctx or {}
+  ctx.pal = bankPal(m, w.paletteNum)
+  ctx.colors = textColors(m, colorId or 1)
+  local boxX, boxY = w.left * 8, w.top * 8
+  local boxW, boxH = (w.width or 1) * 8, (w.height or 1) * 8
+  local textW = PalText.width(text, ctx)
+  if textW <= boxW then
+    return PalText.draw(text, boxX + x, boxY + y, ctx)
+  end
+  local travel = textW - boxW
+  local cycle = (travel + MARQUEE_PAUSE) * 2
+  local t = math.floor((tick or 0) * (pxPerFrame or 2.5)) % cycle
+  local offset
+  if t < MARQUEE_PAUSE then
+    offset = 0
+  elseif t < MARQUEE_PAUSE + travel then
+    offset = t - MARQUEE_PAUSE
+  elseif t < MARQUEE_PAUSE * 2 + travel then
+    offset = travel
+  else
+    offset = travel - (t - (MARQUEE_PAUSE * 2 + travel))
+  end
+  love.graphics.setScissor(boxX, boxY, boxW, boxH)
+  local px, py = PalText.draw(text, boxX + x - offset, boxY + y, ctx)
+  love.graphics.setScissor()
+  return px, py
+end
+
 -- pokeemerald/src/string_util.c:163
 local function pad(n, digits)
   local str = tostring(n)
@@ -428,7 +464,13 @@ local function drawInfo(m, Sm, mon, egg)
   local ability = tonumber(mon.ability or mon.abilityId) or Pokemon.abilityId(Pokemon.speciesOf(mon), mon.personality) or 0
   local aName = Pokemon.abilityName(ability) or ""
   put(m, pageWin(m, "info", 2), aName, 0, 1, 1)
-  put(m, pageWin(m, "info", 2), SummaryData.abilityDescription(ability, aName), 0, 17, 0)
+  local delay = 4
+  pcall(function()
+    local ts = require("src.core.game3.options").textSpeed(Sm._playerState)
+    delay = SPEED_DELAYS[tonumber(ts) or 1] or 4
+  end)
+  marqueePut(m, pageWin(m, "info", 2), SummaryData.abilityDescription(ability, aName),
+    0, 17, 0, Sm._marqueeTick, 10 / delay)
   -- pokeemerald/src/pokemon_summary_screen.c:3116
   local natureId = SummaryData.nature(mon)
   local sections = Kit.loadLua("data/generated/gba/region_map/map_sections.lua")
@@ -623,6 +665,7 @@ end
 function RseSummary.draw(Sm)
   Sm = Sm or S()
   if not Sm.open then return end
+  Sm._marqueeTick = (Sm._marqueeTick or 0) + 1
   local m = manifest()
   if not m then return Sm.draw() end
   local mon = currentMon(Sm)

@@ -52,7 +52,13 @@ function PalText.segments(source, ctx)
   ctx = ctx or {}
   local ir = source
   if type(source) == "string" then
-    if RomText.has(source) then ir = RomText.ir(source) else ir = { { t = "text", s = source } } end
+    if RomText.has(source) then
+      -- Labels go through the translation catalog; this is the RSE summary's
+      -- only text path, and it used to draw the raw English IR.
+      ir = RomText.translate(RomText.ir(source), ctx, source)
+    else
+      ir = { { t = "text", s = source } }
+    end
   end
   return flatten(ir, ctx, {})
 end

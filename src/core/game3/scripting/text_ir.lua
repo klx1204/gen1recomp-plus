@@ -628,6 +628,8 @@ function TextIR.fromAscii(s, opts)
           out[#out + 1] = { t = "rival" }
         elseif name == "STR_VAR_1" then
           out[#out + 1] = { t = "strvar", n = 1 }
+        elseif name:match("^DYNAMIC %d+$") then
+          out[#out + 1] = { t = "dynamic", n = tonumber(name:match("%d+")) }
         elseif name == "STR_VAR_2" then
           out[#out + 1] = { t = "strvar", n = 2 }
         elseif name == "STR_VAR_3" then
