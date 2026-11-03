@@ -464,11 +464,9 @@ local function drawInfo(m, Sm, mon, egg)
   local ability = tonumber(mon.ability or mon.abilityId) or Pokemon.abilityId(Pokemon.speciesOf(mon), mon.personality) or 0
   local aName = Pokemon.abilityName(ability) or ""
   put(m, pageWin(m, "info", 2), aName, 0, 1, 1)
-  local delay = 4
-  pcall(function()
-    local ts = require("src.core.game3.options").textSpeed(Sm._playerState)
-    delay = SPEED_DELAYS[tonumber(ts) or 1] or 4
-  end)
+  -- Readability beats the option: the marquee always uses the slow text
+  -- cadence (one 10 px glyph per 8 frames, 1.25 px/frame at 60 fps).
+  local delay = SPEED_DELAYS[0]
   marqueePut(m, pageWin(m, "info", 2), SummaryData.abilityDescription(ability, aName),
     0, 17, 0, Sm._marqueeTick, 10 / delay)
   -- pokeemerald/src/pokemon_summary_screen.c:3116
