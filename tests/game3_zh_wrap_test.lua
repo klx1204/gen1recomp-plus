@@ -49,6 +49,13 @@ local cut = F.ellipsize("妙蛙种子是一种四足的宝可梦", 60)
 ok(cut:sub(-3) == "…", "long text ends in an ellipsis")
 ok(F.measure(cut) <= 60, "ellipsized text fits")
 
+-- wrapClamp caps a panel to its line budget and ellipsizes the last line.
+local clamped = F.wrapClamp("我代表楠木馆长对这艘船进行调查，他还让我找一个探测器。", 60, 2)
+local n = 0
+for _ in clamped:gmatch("\n") do n = n + 1 end
+ok(n <= 1, "wrapClamp keeps at most two lines")
+ok(clamped:sub(-3) == "…", "wrapClamp ends the last line in an ellipsis")
+
 -- wrap() no longer depends on newlines in the source.
 local wrapped = F.wrap("我代表楠木馆长对这艘船进行调查，他还让我找一个探测器。", 100)
 ok(wrapped:find("\n") ~= nil, "wrap() inserts line breaks")

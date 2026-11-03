@@ -1563,7 +1563,8 @@ function BagMenu.draw()
     end
     if desc then
       -- src/item_menu.c:756 (window 1 at (5, 14), x=0, y=3, maxWidth=200, linePitch=14)
-      FrlgFont.draw(desc, 40, 115, { colors = WIN_WHITE, maxWidth = 200, linePitch = 14, wrap = true })
+      FrlgFont.draw(FrlgFont.wrapClamp(desc, 200, 3), 40, 115, {
+        colors = WIN_WHITE, maxWidth = 200, linePitch = 14 })
     end
   end
 

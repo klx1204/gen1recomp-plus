@@ -1489,6 +1489,23 @@ function FrlgFont.wrap(text, maxWidth, opts)
 end
 
 
+--- Wrap to at most `maxLines`, ending the last line in an ellipsis when the
+-- text does not fit.  Panels with a fixed height (summary descriptions, bag
+-- blurbs) use this instead of letting the tail spill past the frame.
+function FrlgFont.wrapClamp(text, maxWidth, maxLines, opts)
+  local wrapped = FrlgFont.wrap(text, maxWidth, opts)
+  local lines = {}
+  for line in (wrapped .. "\n"):gmatch("(.-)\n") do
+    lines[#lines + 1] = line
+  end
+  if #lines <= maxLines then return wrapped end
+  local keep = {}
+  for i = 1, maxLines do keep[i] = lines[i] end
+  local tail = table.concat(lines, "", maxLines + 1)
+  keep[maxLines] = FrlgFont.ellipsize(keep[maxLines] .. tail, maxWidth, opts)
+  return table.concat(keep, "\n")
+end
+
 local ADVANCE_SMALL = { small = true }
 local ADVANCE_NORMAL = {}
 local ICON_COLORS = { fg = nil, shadow = nil, bg = nil }

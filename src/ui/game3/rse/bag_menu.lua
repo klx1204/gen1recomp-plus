@@ -414,7 +414,10 @@ end
 
 local function drawDescription(text, pal)
   local D = RseBag.DESC
-  FrlgFont.draw(text, D.left * 8 + 3, D.top * 8 + 1, { colors = descColors(pal), maxWidth = D.width * 8 - 3 })
+  local maxW = D.width * 8 - 8
+  local lines = math.max(1, math.floor(((D.height or 6) * 8 - 2) / FrlgFont.linePitch()))
+  FrlgFont.draw(FrlgFont.wrapClamp(text, maxW, lines), D.left * 8 + 3, D.top * 8 + 1,
+    { colors = descColors(pal), maxWidth = maxW })
 end
 
 -- pokeemerald/src/item_menu.c:2548

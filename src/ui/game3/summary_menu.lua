@@ -961,10 +961,9 @@ local function draw_page_skills(mon)
   draw_text(abilityText, ax, ay, 80, "NORMAL")
   local desc = SummaryData.abilityDescription(abilityId, tostring(ability))
   local ad = coords().abilityDesc or { x = 10, y = 143, w = 232 }
-  FrlgFont.draw(desc, ad.x or 10, ad.y or 143, {
+  FrlgFont.draw(FrlgFont.wrapClamp(desc, ad.w or 232, 2), ad.x or 10, ad.y or 143, {
     maxWidth = ad.w or 232,
     colors = STAT_COLORS.NORMAL,
-    wrap = true,
   })
 end
 
@@ -1092,10 +1091,9 @@ local function draw_page_moves(mon, isDetail, parts)
       draw_text(selMove.power, power.x + SummaryMenu.rightAlign(selMove.power, 18), power.y, 32, "NORMAL")
       draw_text(selMove.accuracy, accuracy.x + SummaryMenu.rightAlign(selMove.accuracy, 18), accuracy.y, 32, "NORMAL")
       local desc = SummaryData.moveDescription(selMove.id, selMove.name)
-      FrlgFont.draw(desc, descBox.x, descBox.y, {
+      FrlgFont.draw(FrlgFont.wrapClamp(desc, descBox.w or 112, 2), descBox.x, descBox.y, {
         maxWidth = descBox.w or 112,
         colors = STAT_COLORS.NORMAL,
-        wrap = true,
       })
     end
   end

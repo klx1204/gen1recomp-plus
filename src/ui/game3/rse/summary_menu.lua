@@ -603,7 +603,8 @@ local function drawMoves(m, Sm, mon, contest, detail)
         drawTile(m, "hearts", i < appeal and 1 or 0, tx * 8, ty * 8)
         drawTile(m, "hearts", i < jam and 3 or 4, tx * 8, (ty + 2) * 8)
       end
-      put(m, dw, SummaryData.contestEffectDescription(eff), 6, 1, 0)
+      local ctext = SummaryData.contestEffectDescription(eff)
+      put(m, dw, FrlgFont.wrapClamp(ctext, math.max(80, (dw.width or 24) * 8 - 14), 2), 6, 1, 0)
     end
   else
     local pa = win(m, W.POWER_ACC)
@@ -614,7 +615,8 @@ local function drawMoves(m, Sm, mon, contest, detail)
     local acc = (tonumber(def.accuracy) or 0) == 0 and RomText.plain("gText_ThreeDashes") or pad(def.accuracy, 3)
     put(m, pa, power, 53, 1, 0)
     put(m, pa, acc, 53, 17, 0)
-    put(m, dw, SummaryData.moveDescription(sel.id, Pokemon.moveName(sel.id)), 6, 1, 0)
+    local desc = SummaryData.moveDescription(sel.id, Pokemon.moveName(sel.id))
+    put(m, dw, FrlgFont.wrapClamp(desc, math.max(80, (dw.width or 24) * 8 - 14), 2), 6, 1, 0)
   end
 end
 
