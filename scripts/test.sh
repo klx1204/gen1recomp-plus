@@ -251,6 +251,7 @@ run_tier "T2 save editor: touch value controls" \
 run_tier "T2 save editor: inspector layout" \
   env POKEPORT_DATA_DIR=tests/fixture_data "$LUA" tests/save_editor_inspector_layout_test.lua
 run_tier "T2 save editor: wheel scrolling" "$LUA" tests/save_editor_wheel_bug595_test.lua
+run_tier "T2 save editor: move provenance tags" "$LUA" tests/save_editor_move_sources_test.lua
 run_tier "T2 save editor: pad / NX input" "$LUA" tests/save_editor_pad_input_test.lua
 run_tier "T2 save editor: gold / gen2 (fixtures)" "$LUA" tests/save_editor_gen2_tests.lua
 ACTIVE_GROUP=mods

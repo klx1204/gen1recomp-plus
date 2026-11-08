@@ -11,11 +11,31 @@
 local Theme = require("Theme")
 local Ops = require("Ops")
 local PickerChrome = require("PickerChrome")
+local MoveSources = require("MoveSources")
 local PAL = Theme.PAL
 
 local Picker = {}
 
 local FIELD_ID = "move-picker"
+
+-- Gen 3 type ids (src/core/game3/battle/types.lua).  The catalog keeps the
+-- numeric id, so the row label has to resolve it; Types.name supplies the
+-- localized name when the ROM text is mounted and this table is the fallback.
+local TYPE_NAMES = {
+  [0] = "NORMAL", [1] = "FIGHTING", [2] = "FLYING", [3] = "POISON",
+  [4] = "GROUND", [5] = "ROCK", [6] = "BUG", [7] = "GHOST",
+  [8] = "STEEL", [10] = "FIRE", [11] = "WATER", [12] = "GRASS",
+  [13] = "ELECTRIC", [14] = "PSYCHIC", [15] = "ICE", [16] = "DRAGON",
+  [17] = "DARK",
+}
+
+local function typeLabel(raw)
+  local id = tonumber(raw)
+  if not id then return tostring(raw or "?") end
+  -- Keep the editor's own English table: Types.name is ROM/mod-backed and
+  -- returns mixed-language or placeholder text depending on what is loaded.
+  return TYPE_NAMES[id] or ("TYPE " .. id)
+end
 
 function Picker.results(S)
   local p = S.movePicker
@@ -111,6 +131,8 @@ function Picker.draw(S, Kit, width, height)
   local mon = S.editingMon
   local mv = mon and mon.moves and mon.moves[p.slot]
   local currentId = type(mv) == "table" and (mv.id or mv.moveId) or mv
+  -- nil outside Gen 3: the picker then draws the plain rows it always has.
+  local sourceMap = MoveSources.forMon(S, mon)
 
   if #hits == 0 then
     Kit.emptyBox(cx, cy, inner, listH, "Nothing matches that.")
@@ -142,17 +164,36 @@ function Picker.draw(S, Kit, width, height)
           return
         end
       end
-      local typ = usable and tostring(def and def.type or "?") or "no data"
+      local typ = usable and typeLabel(def and def.type) or "no data"
       local pp = usable and ("PP %d"):format(tonumber(def and def.pp) or 0) or ""
       local tail = pp ~= "" and (typ .. "  " .. pp) or typ
       local tailW = Kit.textWidth("tiny", tail)
+
+      local mid = tonumber(def and (def.moveId or def.id))
+      local marks = MoveSources.marks(sourceMap and mid and sourceMap[mid])
+      local markGap = 6 * s
+      local markW = 0
+      for _, m in ipairs(marks) do
+        markW = markW + Kit.textWidth("tiny", m.text) + markGap
+      end
+
+      local nameMax = math.max(40 * s, inner - tailW - markW - 28 * s)
+      local nameText = Kit.ellipsize("monoRow", (def and def.name) or id, nameMax)
       Kit.text(
         "monoRow",
-        Kit.ellipsize("monoRow", (def and def.name) or id, inner - tailW - 28 * s),
+        nameText,
         cx + 12 * s,
         ry + (rowH - Kit.textHeight("monoRow")) / 2,
         usable and PAL.text or PAL.faint
       )
+      if #marks > 0 then
+        local mx = cx + 12 * s + Kit.textWidth("monoRow", nameText) + 8 * s
+        local my = ry + (rowH - Kit.textHeight("tiny")) / 2
+        for _, m in ipairs(marks) do
+          Kit.text("tiny", m.text, mx, my, m.color)
+          mx = mx + Kit.textWidth("tiny", m.text) + markGap
+        end
+      end
       Kit.textRight(
         "tiny",
         tail,
